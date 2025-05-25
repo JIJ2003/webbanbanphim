@@ -17,33 +17,9 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
-    @GetMapping("/user")
-    public ResponseEntity<?> getCurrentUser(HttpSession session) {
-        User user = (User) session.getAttribute("currentUser");
-        if (user != null) {
-            // Create a safe user object without password
-            Map<String, Object> userResponse = new HashMap<>();
-            userResponse.put("id", user.getId());
-            userResponse.put("email", user.getEmail());
-            userResponse.put("firstName", user.getFirstName());
-            userResponse.put("lastName", user.getLastName());
-            userResponse.put("role", user.getRole().toString());
-            userResponse.put("profileImageUrl", user.getProfileImageUrl());
-            return ResponseEntity.ok(userResponse);
-        }
-        
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("message", "Unauthorized");
-        return ResponseEntity.status(401).body(errorResponse);
-    }
-
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> credentials, HttpSession session) {
-        String email = credentials.get("email");
-        String password = credentials.get("password");
-        
-        Map<String, Object> response = new HashMap<>();
-        
+    public String login(@RequestParam String email, @RequestParam String password, 
+                       HttpSession session, RedirectAttributes redirectAttributes) {
         try {
             Optional<User> userOpt = authService.authenticateUser(email, password);
             
@@ -51,73 +27,50 @@ public class AuthController {
                 User user = userOpt.get();
                 session.setAttribute("currentUser", user);
                 
-                response.put("success", true);
-                response.put("message", "Login successful");
-                response.put("user", Map.of(
-                    "id", user.getId(),
-                    "email", user.getEmail(),
-                    "firstName", user.getFirstName(),
-                    "lastName", user.getLastName(),
-                    "role", user.getRole().toString()
-                ));
-                
-                return ResponseEntity.ok(response);
+                // Redirect based on user role
+                if (User.UserRole.ADMIN.equals(user.getRole())) {
+                    return "redirect:/admin";
+                } else {
+                    return "redirect:/";
+                }
             } else {
-                response.put("success", false);
-                response.put("message", "Invalid email or password");
-                return ResponseEntity.status(401).body(response);
+                redirectAttributes.addFlashAttribute("error", "Invalid email or password");
+                return "redirect:/login";
             }
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Login failed: " + e.getMessage());
-            return ResponseEntity.status(500).body(response);
+            redirectAttributes.addFlashAttribute("error", "Login failed: " + e.getMessage());
+            return "redirect:/login";
         }
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<Map<String, Object>> signup(@RequestBody Map<String, String> userData, HttpSession session) {
-        String email = userData.get("email");
-        String password = userData.get("password");
-        String firstName = userData.get("firstName");
-        String lastName = userData.get("lastName");
-        String roleStr = userData.get("role");
-        
-        Map<String, Object> response = new HashMap<>();
-        
+    public String signup(@RequestParam String email, @RequestParam String password,
+                        @RequestParam String firstName, @RequestParam String lastName,
+                        @RequestParam(defaultValue = "CUSTOMER") String role,
+                        HttpSession session, RedirectAttributes redirectAttributes) {
         try {
-            User.UserRole role = User.UserRole.CUSTOMER;
-            if ("ADMIN".equalsIgnoreCase(roleStr)) {
-                role = User.UserRole.ADMIN;
-            }
-            
-            User user = authService.registerUser(email, password, firstName, lastName, role);
+            User.UserRole userRole = "ADMIN".equalsIgnoreCase(role) ? User.UserRole.ADMIN : User.UserRole.CUSTOMER;
+            User user = authService.registerUser(email, password, firstName, lastName, userRole);
             session.setAttribute("currentUser", user);
             
-            response.put("success", true);
-            response.put("message", "Account created successfully");
-            response.put("user", Map.of(
-                "id", user.getId(),
-                "email", user.getEmail(),
-                "firstName", user.getFirstName(),
-                "lastName", user.getLastName(),
-                "role", user.getRole().toString()
-            ));
+            redirectAttributes.addFlashAttribute("success", "Account created successfully!");
             
-            return ResponseEntity.ok(response);
+            // Redirect based on user role
+            if (User.UserRole.ADMIN.equals(user.getRole())) {
+                return "redirect:/admin";
+            } else {
+                return "redirect:/";
+            }
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Registration failed: " + e.getMessage());
-            return ResponseEntity.status(400).body(response);
+            redirectAttributes.addFlashAttribute("error", "Registration failed: " + e.getMessage());
+            return "redirect:/signup";
         }
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<Map<String, String>> logout(HttpSession session) {
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
         session.removeAttribute("currentUser");
         session.invalidate();
-        
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Logout successful");
-        return ResponseEntity.ok(response);
+        return "redirect:/";
     }
 }
