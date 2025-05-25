@@ -23,9 +23,20 @@ public class User {
     
     private String profileImageUrl;
     
+    @NotBlank
+    private String password;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserRole role = UserRole.CUSTOMER;
+    
     private LocalDateTime createdAt;
     
     private LocalDateTime updatedAt;
+    
+    public enum UserRole {
+        ADMIN, CUSTOMER
+    }
     
     // Default constructor
     public User() {
@@ -72,6 +83,22 @@ public class User {
     
     public void setProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
+    }
+    
+    public String getPassword() {
+        return password;
+    }
+    
+    public void setPassword(String password) {
+        this.password = password;
+    }
+    
+    public UserRole getRole() {
+        return role;
+    }
+    
+    public void setRole(UserRole role) {
+        this.role = role;
     }
     
     public LocalDateTime getCreatedAt() {
