@@ -1,57 +1,77 @@
 package com.keycraft.controller;
 
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import com.keycraft.model.Product;
+import com.keycraft.model.User;
+import com.keycraft.service.ProductService;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
-import java.io.IOException;
-import java.nio.file.Files;
+import java.util.List;
 
 @Controller
 public class HomeController {
 
+    @Autowired
+    private ProductService productService;
+
     @GetMapping("/")
-    public ResponseEntity<String> index() {
-        return serveIndexHtml();
+    public String index(Model model, HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        
+        // Get featured products for the homepage
+        List<Product> featuredProducts = productService.getFeaturedProducts();
+        
+        model.addAttribute("featuredProducts", featuredProducts);
+        model.addAttribute("currentUser", currentUser);
+        
+        return "index";
+    }
+    
+    @GetMapping("/products")
+    public String products(Model model, HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        List<Product> products = productService.getAllProducts();
+        
+        model.addAttribute("products", products);
+        model.addAttribute("currentUser", currentUser);
+        
+        return "products";
     }
     
     @GetMapping("/admin")
-    public ResponseEntity<String> admin() {
-        return serveIndexHtml();
-    }
-    
-    @GetMapping("/{path:[^\\.]*}")
-    public ResponseEntity<String> redirect() {
-        return serveIndexHtml();
-    }
-    
-    private ResponseEntity<String> serveIndexHtml() {
-        try {
-            Resource resource = new ClassPathResource("static/index.html");
-            if (resource.exists()) {
-                String content = Files.readString(resource.getFile().toPath());
-                return ResponseEntity.ok()
-                    .contentType(MediaType.TEXT_HTML)
-                    .body(content);
-            }
-        } catch (IOException e) {
-            // Fall back to serving the frontend directly
+    public String admin(Model model, HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        
+        // Check if user is admin
+        if (currentUser == null || !User.UserRole.ADMIN.equals(currentUser.getRole())) {
+            return "redirect:/login?error=access_denied";
         }
         
-        // Serve the client index.html from the client directory
-        try {
-            Resource resource = new ClassPathResource("../../../client/index.html");
-            String content = Files.readString(resource.getFile().toPath());
-            return ResponseEntity.ok()
-                .contentType(MediaType.TEXT_HTML)
-                .body(content);
-        } catch (Exception e) {
-            return ResponseEntity.ok()
-                .contentType(MediaType.TEXT_HTML)
-                .body("<!DOCTYPE html><html><head><title>KeyCraft</title></head><body><div id='root'></div><script type='module' src='/client/src/main.tsx'></script></body></html>");
+        List<Product> products = productService.getAllProducts();
+        model.addAttribute("products", products);
+        model.addAttribute("currentUser", currentUser);
+        
+        return "admin";
+    }
+    
+    @GetMapping("/login")
+    public String login(HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser != null) {
+            return "redirect:/";
         }
+        return "login";
+    }
+    
+    @GetMapping("/signup")
+    public String signup(HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser != null) {
+            return "redirect:/";
+        }
+        return "signup";
     }
 }

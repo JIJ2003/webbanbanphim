@@ -4,16 +4,14 @@ import com.keycraft.model.User;
 import com.keycraft.service.AuthService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
-@RestController
-@RequestMapping("/api/auth")
-@CrossOrigin(origins = "*")
+@Controller
+@RequestMapping("/auth")
 public class AuthController {
 
     @Autowired
