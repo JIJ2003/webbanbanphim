@@ -247,16 +247,137 @@
     <script src="/webjars/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script>
         function editProduct(id) {
-            // TODO: Implement edit functionality
-            alert('Edit product functionality coming soon!');
+            // Fetch product data via AJAX
+            $.ajax({
+                url: '/api/products/' + id,
+                method: 'GET',
+                success: function(product) {
+                    // Populate edit form with product data
+                    $('#editProductModal #editProductId').val(product.id);
+                    $('#editProductModal #editName').val(product.name);
+                    $('#editProductModal #editBrand').val(product.brand);
+                    $('#editProductModal #editDescription').val(product.description);
+                    $('#editProductModal #editPrice').val(product.price);
+                    $('#editProductModal #editStock').val(product.stock);
+                    $('#editProductModal #editCategory').val(product.category);
+                    $('#editProductModal #editSwitchType').val(product.switchType || '');
+                    $('#editProductModal #editLayout').val(product.layout || '');
+                    $('#editProductModal #editImageUrl').val(product.imageUrl);
+                    $('#editProductModal #editFeatured').prop('checked', product.featured);
+                    
+                    // Show edit modal
+                    new bootstrap.Modal(document.getElementById('editProductModal')).show();
+                },
+                error: function() {
+                    showToast('Failed to load product data', 'error');
+                }
+            });
         }
         
         function deleteProduct(id) {
-            if (confirm('Are you sure you want to delete this product?')) {
-                // TODO: Implement delete functionality
-                alert('Delete functionality coming soon!');
+            if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+                $.ajax({
+                    url: '/api/products/' + id,
+                    method: 'DELETE',
+                    success: function() {
+                        showToast('Product deleted successfully!', 'success');
+                        // Reload page to refresh product list
+                        setTimeout(() => location.reload(), 1000);
+                    },
+                    error: function() {
+                        showToast('Failed to delete product', 'error');
+                    }
+                });
             }
         }
+        
+        function showToast(message, type) {
+            const toastClass = type === 'success' ? 'bg-success' : 'bg-danger';
+            const toast = $(`
+                <div class="toast align-items-center text-white ${toastClass} border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `);
+            
+            $('body').append(`<div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>`);
+            $('#toastContainer').append(toast);
+            const bsToast = new bootstrap.Toast(toast[0]);
+            bsToast.show();
+            
+            toast.on('hidden.bs.toast', function() {
+                $(this).remove();
+            });
+        }
+        
+        // Handle add product form submission with AJAX
+        $('#addProductForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: $('#name').val(),
+                brand: $('#brand').val(),
+                description: $('#description').val(),
+                price: parseFloat($('#price').val()),
+                stock: parseInt($('#stock').val()),
+                category: $('#category').val(),
+                switchType: $('#switchType').val() || null,
+                layout: $('#layout').val() || null,
+                imageUrl: $('#imageUrl').val(),
+                featured: $('#featured').is(':checked')
+            };
+            
+            $.ajax({
+                url: '/api/products',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function() {
+                    showToast('Product added successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+                    setTimeout(() => location.reload(), 1000);
+                },
+                error: function() {
+                    showToast('Failed to add product', 'error');
+                }
+            });
+        });
+        
+        // Handle edit product form submission with AJAX
+        $('#editProductForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const productId = $('#editProductId').val();
+            const formData = {
+                name: $('#editName').val(),
+                brand: $('#editBrand').val(),
+                description: $('#editDescription').val(),
+                price: parseFloat($('#editPrice').val()),
+                stock: parseInt($('#editStock').val()),
+                category: $('#editCategory').val(),
+                switchType: $('#editSwitchType').val() || null,
+                layout: $('#editLayout').val() || null,
+                imageUrl: $('#editImageUrl').val(),
+                featured: $('#editFeatured').is(':checked')
+            };
+            
+            $.ajax({
+                url: '/api/products/' + productId,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function() {
+                    showToast('Product updated successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('editProductModal')).hide();
+                    setTimeout(() => location.reload(), 1000);
+                },
+                error: function() {
+                    showToast('Failed to update product', 'error');
+                }
+            });
+        });
     </script>
 </body>
 </html>

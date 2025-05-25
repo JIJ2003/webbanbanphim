@@ -184,6 +184,10 @@
         </div>
     </div>
 
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer">
+    </div>
+
     <!-- Footer -->
     <footer class="bg-dark text-white py-4 mt-5">
         <div class="container text-center">
@@ -249,9 +253,71 @@
         }
         
         function addToCart(productId) {
-            // TODO: Implement add to cart functionality
-            alert('Add to cart functionality coming soon! Product ID: ' + productId);
+            $.ajax({
+                url: '/api/cart/add',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    productId: productId,
+                    quantity: 1
+                }),
+                success: function(response) {
+                    // Show success message
+                    showToast('Product added to cart!', 'success');
+                    updateCartCount();
+                },
+                error: function(xhr) {
+                    if (xhr.status === 401) {
+                        // User not logged in
+                        if (confirm('Please log in to add items to cart. Would you like to go to login page?')) {
+                            window.location.href = '/login';
+                        }
+                    } else {
+                        showToast('Failed to add product to cart', 'error');
+                    }
+                }
+            });
         }
+        
+        function updateCartCount() {
+            $.ajax({
+                url: '/api/cart',
+                method: 'GET',
+                success: function(cartItems) {
+                    const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+                    $('#cartCount').text(totalItems);
+                    if (totalItems > 0) {
+                        $('#cartCount').show();
+                    }
+                }
+            });
+        }
+        
+        function showToast(message, type) {
+            const toastClass = type === 'success' ? 'bg-success' : 'bg-danger';
+            const toast = $(`
+                <div class="toast align-items-center text-white ${toastClass} border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `);
+            
+            $('#toastContainer').append(toast);
+            const bsToast = new bootstrap.Toast(toast[0]);
+            bsToast.show();
+            
+            // Remove toast after it's hidden
+            toast.on('hidden.bs.toast', function() {
+                $(this).remove();
+            });
+        }
+        
+        // Load cart count on page load
+        $(document).ready(function() {
+            updateCartCount();
+        });
         
         // Real-time search
         $('#searchInput').on('input', function() {
