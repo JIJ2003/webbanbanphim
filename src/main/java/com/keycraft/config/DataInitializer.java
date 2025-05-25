@@ -1,7 +1,9 @@
 package com.keycraft.config;
 
 import com.keycraft.model.Product;
+import com.keycraft.model.User;
 import com.keycraft.repository.ProductRepository;
+import com.keycraft.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -13,12 +15,16 @@ public class DataInitializer implements CommandLineRunner {
 
     @Autowired
     private ProductRepository productRepository;
+    
+    @Autowired
+    private AuthService authService;
 
     @Override
     public void run(String... args) throws Exception {
         if (productRepository.count() == 0) {
             initializeProducts();
         }
+        initializeUsers();
     }
 
     private void initializeProducts() {
@@ -98,5 +104,23 @@ public class DataInitializer implements CommandLineRunner {
         compact.setStock(5);
         compact.setFeatured(true);
         productRepository.save(compact);
+    }
+
+    private void initializeUsers() {
+        try {
+            // Create admin user if doesn't exist
+            authService.registerUser("admin@keycraft.com", "admin123", "Admin", "User", User.UserRole.ADMIN);
+            System.out.println("Created admin user: admin@keycraft.com / admin123");
+        } catch (Exception e) {
+            System.out.println("Admin user already exists or error creating: " + e.getMessage());
+        }
+
+        try {
+            // Create customer user if doesn't exist
+            authService.registerUser("customer@keycraft.com", "customer123", "John", "Doe", User.UserRole.CUSTOMER);
+            System.out.println("Created customer user: customer@keycraft.com / customer123");
+        } catch (Exception e) {
+            System.out.println("Customer user already exists or error creating: " + e.getMessage());
+        }
     }
 }

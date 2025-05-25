@@ -14,7 +14,8 @@ public class AuthService {
     @Autowired
     private UserRepository userRepository;
 
-    private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public User registerUser(String email, String password, String firstName, String lastName, User.UserRole role) {
         // Check if user already exists

@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.session.web.http.CookieHttpSessionIdResolver;
 import org.springframework.session.web.http.HttpSessionIdResolver;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 
 @Configuration
 @EnableWebSecurity
