@@ -30,8 +30,10 @@ public class User {
     @Column(nullable = false)
     private UserRole role = UserRole.CUSTOMER;
     
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
     
     public enum UserRole {
@@ -101,8 +103,24 @@ public class User {
         this.role = role;
     }
     
+    public String getRoleString() {
+        return role.name();
+    }
+
+    
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+    
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+    
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
     
     public void setCreatedAt(LocalDateTime createdAt) {
@@ -117,8 +135,8 @@ public class User {
         this.updatedAt = updatedAt;
     }
     
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
+//    @PreUpdate
+//    public void preUpdate() {
+//        this.updatedAt = LocalDateTime.now();
+//    }
 }

@@ -36,29 +36,30 @@ public class ProductService {
         return productRepository.save(product);
     }
 
-    public Product updateProduct(Long id, Product productDetails) {
-        return productRepository.findById(id)
-                .map(product -> {
-                    product.setName(productDetails.getName());
-                    product.setDescription(productDetails.getDescription());
-                    product.setPrice(productDetails.getPrice());
-                    product.setImageUrl(productDetails.getImageUrl());
-                    product.setCategory(productDetails.getCategory());
-                    product.setBrand(productDetails.getBrand());
-                    product.setSwitchType(productDetails.getSwitchType());
-                    product.setLayout(productDetails.getLayout());
-                    product.setStock(productDetails.getStock());
-                    product.setFeatured(productDetails.getFeatured());
-                    return productRepository.save(product);
-                })
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+    public Optional<Product> updateProduct(Long id, Product updatedProduct) {
+        Optional<Product> existing = productRepository.findById(id);
+        if (existing.isEmpty()) return Optional.empty();
+
+        Product product = existing.get();
+                    product.setName(updatedProduct.getName());
+                    product.setDescription(updatedProduct.getDescription());
+                    product.setPrice(updatedProduct.getPrice());
+                    product.setImageUrl(updatedProduct.getImageUrl());
+                    product.setCategory(updatedProduct.getCategory());
+                    product.setBrand(updatedProduct.getBrand());
+                    product.setSwitchType(updatedProduct.getSwitchType());
+                    product.setLayout(updatedProduct.getLayout());
+                    product.setStock(updatedProduct.getStock());
+                    product.setFeatured(updatedProduct.getFeatured());
+                    return Optional.of(productRepository.save(product));
+
     }
 
-    public void deleteProduct(Long id) {
-        if (productRepository.existsById(id)) {
-            productRepository.deleteById(id);
-        } else {
-            throw new RuntimeException("Product not found with id: " + id);
-        }
+    public boolean deleteProduct(Long id) {
+        Optional<Product> existing = productRepository.findById(id);
+        if (existing.isEmpty()) return false;
+
+        productRepository.deleteById(id);
+        return true;
     }
 }

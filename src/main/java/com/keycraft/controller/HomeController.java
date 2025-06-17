@@ -2,9 +2,14 @@ package com.keycraft.controller;
 
 import com.keycraft.model.Product;
 import com.keycraft.model.User;
+import com.keycraft.repository.UserRepository;
+import com.keycraft.service.CustomUserDetailsService;
 import com.keycraft.service.ProductService;
 import jakarta.servlet.http.HttpSession;
+
+import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,19 +21,36 @@ public class HomeController {
 
     @Autowired
     private ProductService productService;
+    @Autowired
+    private UserRepository userRepository;
 
     @GetMapping("/")
-    public String index(Model model, HttpSession session) {
-        User currentUser = (User) session.getAttribute("currentUser");
-        
-        // Get featured products for the homepage
-        List<Product> featuredProducts = productService.getFeaturedProducts();
-        
-        model.addAttribute("featuredProducts", featuredProducts);
-        model.addAttribute("currentUser", currentUser);
-        
+    public String homeRedirect() {
+        return "redirect:/index";
+    }
+
+    @GetMapping("/index")
+    public String index(Model model) {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
+            return "redirect:/login";
+        }
+
+        String email = auth.getName();
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        model.addAttribute("currentUser", user);
+        model.addAttribute("featuredProducts", productService.getFeaturedProducts());
+
         return "index";
     }
+
+
     
     @GetMapping("/products")
     public String products(Model model, HttpSession session) {
@@ -42,20 +64,27 @@ public class HomeController {
     }
     
     @GetMapping("/admin")
-    public String admin(Model model, HttpSession session) {
-        User currentUser = (User) session.getAttribute("currentUser");
-        
-        // Check if user is admin
-        if (currentUser == null || !User.UserRole.ADMIN.equals(currentUser.getRole())) {
+    public String admin(Model model) {
+        org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
             return "redirect:/login?error=access_denied";
         }
-        
-        List<Product> products = productService.getAllProducts();
-        model.addAttribute("products", products);
-        model.addAttribute("currentUser", currentUser);
-        
+
+        // Lấy email từ principal
+        String email = auth.getName();
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null || !User.UserRole.ADMIN.equals(user.getRole())) {
+            return "redirect:/login?error=access_denied";
+        }
+
+        model.addAttribute("currentUser", user);
+        model.addAttribute("products", productService.getAllProducts());
+
         return "admin";
     }
+
     
     @GetMapping("/login")
     public String login(HttpSession session) {

@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,18 +45,19 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/products">Products</a>
                     </li>
-                    <c:if test="${currentUser != null && currentUser.role == 'ADMIN'}">
+                    <c:if test="${not empty currentUser and currentUser.role eq 'ADMIN'}">
                         <li class="nav-item">
                             <a class="nav-link" href="/admin">Admin Panel</a>
-                        </li>
+                        </li>                        
                     </c:if>
                 </ul>
                 <ul class="navbar-nav">
                     <c:choose>
-                        <c:when test="${currentUser != null}">
+                        <c:when test="${not empty currentUser}">
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-user"></i> ${currentUser.firstName} ${currentUser.lastName}
+                                    <i class="fas fa-user"></i> 
+                                    <c:out value="${currentUser.firstName}" /> <c:out value="${currentUser.lastName}" />
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" href="/auth/logout">Logout</a></li>
@@ -95,14 +97,14 @@
                 <c:forEach items="${featuredProducts}" var="product">
                     <div class="col-md-4 mb-4">
                         <div class="card product-card h-100">
-                            <img src="${product.imageUrl}" class="card-img-top" alt="${product.name}" style="height: 200px; object-fit: cover;">
+                            <img src="<c:out value='${product.imageUrl}'/>" class="card-img-top" alt="<c:out value='${product.name}'/>" style="height: 200px; object-fit: cover;">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">${product.name}</h5>
-                                <p class="card-text flex-grow-1">${product.description}</p>
+                                <h5 class="card-title"><c:out value="${product.name}"/></h5>
+                                <p class="card-text flex-grow-1"><c:out value="${product.description}"/></p>
                                 <div class="mt-auto">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <span class="h5 text-primary">$${product.price}</span>
-                                        <small class="text-muted">${product.brand}</small>
+                                        <span class="h5 text-primary">$<c:out value="${product.price}"/></span>
+                                        <small class="text-muted"><c:out value="${product.brand}"/></small>
                                     </div>
                                     <button class="btn btn-primary w-100 mt-2">
                                         <i class="fas fa-cart-plus"></i> Add to Cart

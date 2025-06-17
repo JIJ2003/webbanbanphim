@@ -12,37 +12,53 @@ import java.io.IOException;
 @Component
 public class AdminAuthFilter implements Filter {
 
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
-        
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
-        
-        String requestURI = httpRequest.getRequestURI();
-        
-        // Check if this is an admin-only endpoint
-        if (requestURI.startsWith("/api/admin/") || 
-            (requestURI.startsWith("/api/products") && 
-             ("POST".equals(httpRequest.getMethod()) || 
-              "PUT".equals(httpRequest.getMethod()) || 
-              "DELETE".equals(httpRequest.getMethod())))) {
-            
-            HttpSession session = httpRequest.getSession(false);
-            User currentUser = null;
-            
-            if (session != null) {
-                currentUser = (User) session.getAttribute("currentUser");
-            }
-            
-            if (currentUser == null || !User.UserRole.ADMIN.equals(currentUser.getRole())) {
-                httpResponse.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                httpResponse.setContentType("application/json");
-                httpResponse.getWriter().write("{\"message\":\"Admin access required\"}");
-                return;
-            }
-        }
-        
-        chain.doFilter(request, response);
-    }
+	@Override
+	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+	        throws IOException, ServletException {
+	    
+	    HttpServletRequest httpRequest = (HttpServletRequest) request;
+	    HttpServletResponse httpResponse = (HttpServletResponse) response;
+	    
+	    String requestURI = httpRequest.getRequestURI();
+	    
+	    if (requestURI.startsWith("/api/admin/") || 
+	        (requestURI.startsWith("/api/products") && 
+	         ("POST".equals(httpRequest.getMethod()) || 
+	          "PUT".equals(httpRequest.getMethod()) || 
+	          "DELETE".equals(httpRequest.getMethod())))) {
+	        
+	        HttpSession session = httpRequest.getSession(false);
+	        User currentUser = null;
+	        
+	        System.out.println("Request URI: " + requestURI);
+	        System.out.println("HTTP Method: " + httpRequest.getMethod());
+	        System.out.println("Session: " + session);
+	        
+	        if (session != null) {
+	            currentUser = (User) session.getAttribute("currentUser");
+	        }
+	        
+	        System.out.println("CurrentUser: " + currentUser);
+	        
+	        if (currentUser == null) {
+	            System.out.println("No user logged in.");
+	            httpResponse.setStatus(HttpServletResponse.SC_FORBIDDEN);
+	            httpResponse.setContentType("application/json");
+	            httpResponse.getWriter().write("{\"message\":\"Admin access required: no user\"}");
+	            return;
+	        }
+	        
+	        System.out.println("User Role: " + currentUser.getRole());
+	        if (!User.UserRole.ADMIN.equals(currentUser.getRole())) {
+	            System.out.println("User is not admin.");
+	            httpResponse.setStatus(HttpServletResponse.SC_FORBIDDEN);
+	            httpResponse.setContentType("application/json");
+	            httpResponse.getWriter().write("{\"message\":\"Admin access required: not admin\"}");
+	            return;
+	        }
+	    }
+	    
+	    chain.doFilter(request, response);
+	}
+
 }
