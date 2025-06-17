@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/orders")
@@ -56,10 +57,10 @@ public class OrderController {
         }
         
         try {
-            Order order = orderService.getOrderById(orderId);
+            Object order = orderService.getOrderById(orderId);
             
             // Check if user owns this order
-            if (!order.getUser().getId().equals(user.getId())) {
+            if (!((Order) order).getUser().getId().equals(user.getId())) {
                 return "redirect:/orders";
             }
             

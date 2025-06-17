@@ -45,6 +45,17 @@
                             <a class="nav-link" href="/admin">Admin Panel</a>
                         </li>
                     </c:if>
+                                        <c:if test="${not empty currentUser}">
+    <li class="nav-item">
+        <a class="nav-link" href="/cart">
+            <i class="fas fa-shopping-cart"></i>
+            Cart
+            <c:if test="${cartItemCount > 0}">
+                <span class="badge bg-warning text-dark">${cartItemCount}</span>
+            </c:if>
+        </a>
+    </li>
+</c:if>
                 </ul>
                 <ul class="navbar-nav">
                     <c:choose>

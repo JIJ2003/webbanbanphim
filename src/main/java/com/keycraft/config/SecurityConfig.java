@@ -36,10 +36,11 @@ public class SecurityConfig {
 	 @Bean
 	 public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 	     http
+	        .cors(cors -> cors.configurationSource(corsConfigurationSource())) // ✅ Bắt buộc
 	         .csrf(csrf -> csrf.disable())
 	         .authorizeHttpRequests(authz -> authz
 	             .requestMatchers("/api/products/**", "/api/services/**", "/api/auth/**", "/auth/**").permitAll()
-	             .requestMatchers("/", "/login", "/signup", "/client/**", "/static/**", "/css/**", "/js/**", "/images/**").permitAll()
+	             .requestMatchers("/", "/login", "/signup", "/cart", "/checkout", "/client/**", "/static/**", "/css/**", "/js/**", "/images/**").permitAll()
 	             .requestMatchers("/admin").hasRole("ADMIN")
 	             .anyRequest().permitAll()
 	         )
@@ -74,6 +75,19 @@ public class SecurityConfig {
 
 	     return http.build();
 	 }
+	 @Bean
+	 public CorsConfigurationSource corsConfigurationSource() {
+	     CorsConfiguration config = new CorsConfiguration();
+	     config.setAllowCredentials(false); // ✅ Có thể giữ true
+	     config.setAllowedOriginPatterns(List.of("http://localhost:8080")); // ✅ Đúng cách thay thế "*"
+	     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+	     config.setAllowedHeaders(List.of("*"));
+
+	     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+	     source.registerCorsConfiguration("/**", config);
+	     return source;
+	 }
+
 	 
     @Bean
     public PasswordEncoder passwordEncoder() {

@@ -1,15 +1,14 @@
 package com.keycraft.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
-@Table(name = "orders")
-public class Order {
+@Table(name = "reviews")
+public class Review {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,16 +18,21 @@ public class Order {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
     
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<OrderItem> orderItems = new ArrayList<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
     
     @NotNull
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal totalAmount;
-    
-    @Enumerated(EnumType.STRING)
+    @Min(1)
+    @Max(5)
     @Column(nullable = false)
-    private OrderStatus status = OrderStatus.PENDING;
+    private Integer rating;
+    
+    @Column(columnDefinition = "TEXT")
+    private String comment;
+    
+    @Column(nullable = false)
+    private Boolean verified = false; // Only verified purchasers can review
     
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -36,20 +40,19 @@ public class Order {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
     
-    public enum OrderStatus {
-        PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED
-    }
-    
     // Default constructor
-    public Order() {
+    public Review() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
     
     // Constructor with parameters
-    public Order(User user, BigDecimal totalAmount) {
+    public Review(User user, Product product, Integer rating, String comment, Boolean verified) {
         this.user = user;
-        this.totalAmount = totalAmount;
+        this.product = product;
+        this.rating = rating;
+        this.comment = comment;
+        this.verified = verified;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
@@ -71,28 +74,36 @@ public class Order {
         this.user = user;
     }
     
-    public List<OrderItem> getOrderItems() {
-        return orderItems;
+    public Product getProduct() {
+        return product;
     }
     
-    public void setOrderItems(List<OrderItem> orderItems) {
-        this.orderItems = orderItems;
+    public void setProduct(Product product) {
+        this.product = product;
     }
     
-    public BigDecimal getTotalAmount() {
-        return totalAmount;
+    public Integer getRating() {
+        return rating;
     }
     
-    public void setTotalAmount(BigDecimal totalAmount) {
-        this.totalAmount = totalAmount;
+    public void setRating(Integer rating) {
+        this.rating = rating;
     }
     
-    public OrderStatus getStatus() {
-        return status;
+    public String getComment() {
+        return comment;
     }
     
-    public void setStatus(OrderStatus status) {
-        this.status = status;
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+    
+    public Boolean getVerified() {
+        return verified;
+    }
+    
+    public void setVerified(Boolean verified) {
+        this.verified = verified;
     }
     
     public LocalDateTime getCreatedAt() {

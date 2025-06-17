@@ -3,15 +3,15 @@ package com.keycraft.service;
 import com.keycraft.model.*;
 import com.keycraft.repository.OrderRepository;
 import com.keycraft.repository.OrderItemRepository;
-import com.keycraft.model.User;
-import com.keycraft.repository.ProductRepository;
+import com.keycraft.repository.CartItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -21,90 +21,112 @@ public class OrderService {
     private OrderRepository orderRepository;
     
     @Autowired
-    private OrderItemRepository orderItemRepository;
+    private CartItemRepository cartItemRepository;
     
-    @Autowired
-    private ProductRepository productRepository;
-    
+//    @Autowired
+//    private NotificationService notificationService;
+//    
     @Autowired
     private CartService cartService;
     
-//    @Autowired
-//private EmailService emailService;
-    
-    public Order createOrder(User user, String shippingAddress, String billingAddress, String paymentMethod) {
-        List<Cart> cartItems = cartService.getCartItems(user);
+    public Order createOrderFromCart(User user) {
+    	List<CartItem> cartItems = cartService.getCartItems(user);
         
         if (cartItems.isEmpty()) {
-            throw new RuntimeException("Cart is empty");
+            throw new IllegalStateException("Cart is empty");
         }
         
-        // Validate stock availability
-        for (Cart cartItem : cartItems) {
-            Product product = cartItem.getProduct();
-            if (product.getStock() < cartItem.getQuantity()) {
-                throw new RuntimeException("Insufficient stock for product: " + product.getName());
-            }
+        // Calculate total amount
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        for (CartItem cartItem : cartItems) {
+            totalAmount = totalAmount.add(cartItem.getSubtotal());
         }
         
         // Create order
-        Order order = new Order();
-        order.setUser(user);
-        order.setCustomerEmail(user.getEmail());
-        order.setCustomerName(user.getFirstName() + " " + user.getLastName());
-        order.setShippingAddress(shippingAddress);
-        order.setBillingAddress(billingAddress);
-        order.setPaymentMethod(paymentMethod);
-        order.setStatus(Order.OrderStatus.CONFIRMED);
-        
-        // Calculate total amount
-        BigDecimal totalAmount = cartItems.stream()
-            .map(cart -> cart.getProduct().getPrice().multiply(BigDecimal.valueOf(cart.getQuantity())))
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        order.setTotalAmount(totalAmount);
-        
-        // Save order
+        Order order = new Order(user, totalAmount);
         order = orderRepository.save(order);
         
-        // Create order items and update stock
-        for (Cart cartItem : cartItems) {
-            Product product = cartItem.getProduct();
-            
+        // Create order items
+        List<OrderItem> orderItems = new ArrayList<>();
+        for (CartItem cartItem : cartItems) {
             OrderItem orderItem = new OrderItem(
                 order, 
-                product, 
+                cartItem.getProduct(), 
                 cartItem.getQuantity(), 
-                product.getPrice()
+                cartItem.getProduct().getPrice()
             );
-            orderItemRepository.save(orderItem);
-            
-            // Update product stock
-            product.setStock(product.getStock() - cartItem.getQuantity());
-            productRepository.save(product);
+            orderItems.add(orderItem);
         }
+        order.setOrderItems(orderItems);
         
         // Clear cart
         cartService.clearCart(user);
         
-        // Send confirmation email
-        //emailService.sendOrderConfirmation(order);
+        // Send notification
+//        notificationService.createCartNotification(user, 
+//            "Order Placed", 
+//            "Your order #" + order.getId() + " has been placed successfully",
+//            NotificationService.NotificationType.ORDER_PLACED);
         
-        return order;
+        return orderRepository.save(order);
     }
     
     public List<Order> getUserOrders(User user) {
-        return orderRepository.findByUserOrderByCreatedAtDesc(user);
+        return orderRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
     }
     
-    public Order getOrderById(Long orderId) {
-        return orderRepository.findById(orderId)
-            .orElseThrow(() -> new RuntimeException("Order not found"));
+    public Optional<Order> getOrderById(Long orderId) {
+        return orderRepository.findById(orderId);
     }
     
     public Order updateOrderStatus(Long orderId, Order.OrderStatus status) {
-        Order order = getOrderById(orderId);
-        order.setStatus(status);
-        return orderRepository.save(order);
+        Optional<Order> orderOpt = orderRepository.findById(orderId);
+        if (orderOpt.isPresent()) {
+            Order order = orderOpt.get();
+            order.setStatus(status);
+            Order savedOrder = orderRepository.save(order);
+            
+//            // Send notification based on status
+////            String title = "";
+////            String message = "";
+////            NotificationService.NotificationType notificationType = NotificationService.NotificationType.ORDER_CONFIRMED;
+////            
+//            switch (status) {
+//                case CONFIRMED:
+//                    title = "Order Confirmed";
+//                    message = "Your order #" + orderId + " has been confirmed";
+//                    notificationType = NotificationService.NotificationType.ORDER_CONFIRMED;
+//                    break;
+//                case SHIPPED:
+//                    title = "Order Shipped";
+//                    message = "Your order #" + orderId + " has been shipped";
+//                    notificationType = NotificationService.NotificationType.ORDER_SHIPPED;
+//                    break;
+//                case DELIVERED:
+//                    title = "Order Delivered";
+//                    message = "Your order #" + orderId + " has been delivered";
+//                    notificationType = NotificationService.NotificationType.ORDER_DELIVERED;
+//                    break;
+//                case CANCELLED:
+//                    title = "Order Cancelled";
+//                    message = "Your order #" + orderId + " has been cancelled";
+//                    break;
+//            }
+//            
+//            if (!title.isEmpty()) {
+//                notificationService.createCartNotification(order.getUser(), title, message, notificationType);
+//            }
+            
+            return savedOrder;
+        }
+        return null;
+    }
+    
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll();
+    }
+    
+    public List<Order> getOrdersByStatus(Order.OrderStatus status) {
+        return orderRepository.findByStatus(status);
     }
 }

@@ -1,6 +1,8 @@
 package com.keycraft.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 @Entity
@@ -19,14 +21,18 @@ public class OrderItem {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
     
+    @NotNull
+    @Min(1)
     @Column(nullable = false)
     private Integer quantity;
     
+    @NotNull
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
     
+    @NotNull
     @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal totalPrice;
+    private BigDecimal subtotal;
     
     // Default constructor
     public OrderItem() {}
@@ -37,7 +43,7 @@ public class OrderItem {
         this.product = product;
         this.quantity = quantity;
         this.unitPrice = unitPrice;
-        this.totalPrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
+        this.subtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
     }
     
     // Getters and Setters
@@ -71,9 +77,8 @@ public class OrderItem {
     
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
-        // Recalculate total price when quantity changes
         if (this.unitPrice != null) {
-            this.totalPrice = this.unitPrice.multiply(BigDecimal.valueOf(quantity));
+            this.subtotal = this.unitPrice.multiply(BigDecimal.valueOf(quantity));
         }
     }
     
@@ -83,17 +88,16 @@ public class OrderItem {
     
     public void setUnitPrice(BigDecimal unitPrice) {
         this.unitPrice = unitPrice;
-        // Recalculate total price when unit price changes
         if (this.quantity != null) {
-            this.totalPrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
+            this.subtotal = unitPrice.multiply(BigDecimal.valueOf(this.quantity));
         }
     }
     
-    public BigDecimal getTotalPrice() {
-        return totalPrice;
+    public BigDecimal getSubtotal() {
+        return subtotal;
     }
     
-    public void setTotalPrice(BigDecimal totalPrice) {
-        this.totalPrice = totalPrice;
+    public void setSubtotal(BigDecimal subtotal) {
+        this.subtotal = subtotal;
     }
 }

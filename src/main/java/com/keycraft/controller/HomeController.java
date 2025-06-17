@@ -1,8 +1,10 @@
 package com.keycraft.controller;
 
+import com.keycraft.model.CartItem;
 import com.keycraft.model.Product;
 import com.keycraft.model.User;
 import com.keycraft.repository.UserRepository;
+import com.keycraft.service.CartService;
 import com.keycraft.service.CustomUserDetailsService;
 import com.keycraft.service.ProductService;
 import jakarta.servlet.http.HttpSession;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.security.Principal;
 import java.util.List;
 
 @Controller
@@ -23,6 +26,8 @@ public class HomeController {
     private ProductService productService;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private CartService cartService;
 
     @GetMapping("/")
     public String homeRedirect() {
@@ -46,6 +51,10 @@ public class HomeController {
 
         model.addAttribute("currentUser", user);
         model.addAttribute("featuredProducts", productService.getFeaturedProducts());
+        
+     // ← **Thêm dòng này** để badge Cart biết có bao nhiêu item
+        Long cartItemCount = cartService.getCartItemCount(user);
+        model.addAttribute("cartItemCount", cartItemCount);
 
         return "index";
     }
@@ -59,6 +68,11 @@ public class HomeController {
         
         model.addAttribute("products", products);
         model.addAttribute("currentUser", currentUser);
+        
+        if (currentUser != null) {
+            Long cartItemCount = cartService.getCartItemCount(currentUser);
+            model.addAttribute("cartItemCount", cartItemCount);
+        }
         
         return "products";
     }
@@ -103,4 +117,5 @@ public class HomeController {
         }
         return "signup";
     }
+
 }
