@@ -12,7 +12,6 @@ com\keycraft\service\ReviewService$ReviewStats.class
 com\keycraft\repository\ReviewRepository.class
 com\keycraft\model\OrderItem.class
 com\keycraft\config\SecurityConfig.class
-com\keycraft\service\OrderService$1.class
 com\keycraft\controller\HomeController.class
 com\keycraft\repository\CartRepository.class
 com\keycraft\model\Order.class

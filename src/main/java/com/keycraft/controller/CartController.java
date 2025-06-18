@@ -22,21 +22,16 @@ import java.util.Map;
 @RequestMapping("/cart")
 public class CartController {
 
-    @Autowired
-    private CartService cartService;
-
-    @Autowired
-    private ProductService productService;
-
-    @Autowired
-    private AuthService authService;
+    @Autowired private CartService cartService;
+    @Autowired private ProductService productService;
+    @Autowired private AuthService authService;
 
     // ====================== PAGE RENDER ======================
-
     @GetMapping
     public String cartPage(Model model, Authentication authentication) {
-        if (isNotAuthenticated(authentication)) return "redirect:/auth/login";
-
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/auth/login";
+        }
         User user = authService.getCurrentUser(authentication);
         List<CartItem> cartItems = cartService.getCartItems(user);
 
@@ -44,151 +39,145 @@ public class CartController {
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("cartTotal", cartService.getCartTotal(user));
         model.addAttribute("cartItemCount", cartService.getCartItemCount(user));
-
         return "cart";
     }
 
     // ====================== API ACTIONS ======================
-
     @PostMapping("/add")
     @ResponseBody
-    public ResponseEntity<?> addToCart(@RequestParam Long productId,
-                                       @RequestParam(defaultValue = "1") Integer quantity,
-                                       Authentication authentication) {
+    public ResponseEntity<Map<String,Object>> addToCart(
+            @RequestParam("productId") Long productId,
+            @RequestParam(value="quantity", defaultValue="1") int quantity,
+            Authentication authentication) {
 
-        Map<String, Object> response = new HashMap<>();
-
-        if (isNotAuthenticated(authentication)) {
-            return responseFail(response, "Please login to add items to cart");
+        Map<String,Object> resp = new HashMap<>();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            resp.put("success", false);
+            resp.put("message", "Please login to add items to cart");
+            return ResponseEntity.ok(resp);
         }
 
         try {
             User user = authService.getCurrentUser(authentication);
-            Product product = productService.findById(productId);
-
-            if (product == null) {
-                return responseFail(response, "Product not found");
+            Product p = productService.findById(productId);
+            if (p == null) {
+                resp.put("success", false);
+                resp.put("message", "Product not found");
+                return ResponseEntity.ok(resp);
             }
-
-            if (product.getStock() < quantity) {
-                return responseFail(response, "Insufficient stock");
+            if (p.getStock() < quantity) {
+                resp.put("success", false);
+                resp.put("message", "Insufficient stock");
+                return ResponseEntity.ok(resp);
             }
+            CartItem ci = cartService.addToCart(user, p, quantity);
+            resp.put("success", true);
+            resp.put("message", "Added to cart");
+            resp.put("cartItemCount", cartService.getCartItemCount(user));
+            return ResponseEntity.ok(resp);
 
-            CartItem cartItem = cartService.addToCart(user, product, quantity);
-
-            response.put("success", true);
-            response.put("message", "Product added to cart successfully");
-            response.put("cartItem", cartItem);
-            response.put("cartItemCount", cartService.getCartItemCount(user));
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            return responseFail(response, "Error adding to cart: " + e.getMessage());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            resp.put("success", false);
+            resp.put("message", "Error: "+ex.getMessage());
+            return ResponseEntity.ok(resp);
         }
     }
 
     @PostMapping("/update")
     @ResponseBody
-    public ResponseEntity<?> updateCartItem(@RequestParam Long cartItemId,
-                                            @RequestParam Integer quantity,
-                                            Authentication authentication) {
+    public ResponseEntity<Map<String,Object>> updateCartItem(
+            @RequestParam Long cartItemId,
+            @RequestParam Integer quantity,
+            Authentication authentication) {
 
-        Map<String, Object> response = new HashMap<>();
-
-        if (isNotAuthenticated(authentication)) {
-            return responseFail(response, "Please login to update cart");
+        Map<String,Object> resp = new HashMap<>();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            resp.put("success", false);
+            resp.put("message", "Please login to update cart");
+            return ResponseEntity.ok(resp);
         }
 
         try {
             User user = authService.getCurrentUser(authentication);
             cartService.updateCartItemQuantity(user, cartItemId, quantity);
+            resp.put("success", true);
+            resp.put("message", "Cart updated successfully");
+            resp.put("cartItemCount", cartService.getCartItemCount(user));
+            resp.put("cartTotal", cartService.getCartTotal(user));
+            return ResponseEntity.ok(resp);
 
-            response.put("success", true);
-            response.put("message", "Cart updated successfully");
-            response.put("cartTotal", cartService.getCartTotal(user));
-            response.put("cartItemCount", cartService.getCartItemCount(user));
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            return responseFail(response, "Error updating cart: " + e.getMessage());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            resp.put("success", false);
+            resp.put("message", "Error: "+ex.getMessage());
+            return ResponseEntity.ok(resp);
         }
     }
 
     @PostMapping("/remove")
     @ResponseBody
-    public ResponseEntity<?> removeFromCart(@RequestParam Long cartItemId,
-                                            Authentication authentication) {
+    public ResponseEntity<Map<String,Object>> removeFromCart(
+            @RequestParam Long cartItemId,
+            Authentication authentication) {
 
-        Map<String, Object> response = new HashMap<>();
-
-        if (isNotAuthenticated(authentication)) {
-            return responseFail(response, "Please login to remove items from cart");
+        Map<String,Object> resp = new HashMap<>();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            resp.put("success", false);
+            resp.put("message", "Please login");
+            return ResponseEntity.ok(resp);
         }
-
         try {
             User user = authService.getCurrentUser(authentication);
             cartService.removeFromCart(user, cartItemId);
-
-            response.put("success", true);
-            response.put("message", "Item removed from cart");
-            response.put("cartTotal", cartService.getCartTotal(user));
-            response.put("cartItemCount", cartService.getCartItemCount(user));
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            return responseFail(response, "Error removing item: " + e.getMessage());
+            resp.put("success", true);
+            resp.put("message", "Removed item");
+            resp.put("cartItemCount", cartService.getCartItemCount(user));
+            resp.put("cartTotal", cartService.getCartTotal(user));
+            return ResponseEntity.ok(resp);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            resp.put("success", false);
+            resp.put("message", "Error: "+ex.getMessage());
+            return ResponseEntity.ok(resp);
         }
     }
 
     @PostMapping("/clear")
     @ResponseBody
-    public ResponseEntity<?> clearCart(Authentication authentication) {
-
-        Map<String, Object> response = new HashMap<>();
-
-        if (isNotAuthenticated(authentication)) {
-            return responseFail(response, "Please login to clear cart");
+    public ResponseEntity<Map<String,Object>> clearCart(Authentication authentication) {
+        Map<String,Object> resp = new HashMap<>();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            resp.put("success", false);
+            resp.put("message", "Please login");
+            return ResponseEntity.ok(resp);
         }
-
         try {
             User user = authService.getCurrentUser(authentication);
             cartService.clearCart(user);
-
-            response.put("success", true);
-            response.put("message", "Cart cleared successfully");
-            response.put("cartItemCount", 0L);
-            response.put("cartTotal", BigDecimal.ZERO);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            return responseFail(response, "Error clearing cart: " + e.getMessage());
+            resp.put("success", true);
+            resp.put("message", "Cart cleared");
+            resp.put("cartItemCount", 0);
+            resp.put("cartTotal", BigDecimal.ZERO);
+            return ResponseEntity.ok(resp);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            resp.put("success", false);
+            resp.put("message", "Error: "+ex.getMessage());
+            return ResponseEntity.ok(resp);
         }
     }
 
     @GetMapping("/count")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getCartCount(Authentication authentication) {
-        Map<String, Object> response = new HashMap<>();
-
-        if (isNotAuthenticated(authentication)) {
-            response.put("cartItemCount", 0L);
+    public ResponseEntity<Map<String,Object>> getCartCount(Authentication authentication) {
+        Map<String,Object> resp = new HashMap<>();
+        if (authentication==null || !authentication.isAuthenticated()) {
+            resp.put("cartItemCount", 0);
         } else {
-            User user = authService.getCurrentUser(authentication);
-            response.put("cartItemCount", cartService.getCartItemCount(user));
+            User u = authService.getCurrentUser(authentication);
+            resp.put("cartItemCount", cartService.getCartItemCount(u));
         }
-
-        return ResponseEntity.ok(response);
-    }
-
-    // ====================== HELPER ======================
-
-    private boolean isNotAuthenticated(Authentication authentication) {
-        return authentication == null || !authentication.isAuthenticated();
-    }
-
-    private ResponseEntity<Map<String, Object>> responseFail(Map<String, Object> response, String message) {
-        response.put("success", false);
-        response.put("message", message);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(resp);
     }
 }

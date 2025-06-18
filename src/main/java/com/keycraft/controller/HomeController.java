@@ -62,20 +62,27 @@ public class HomeController {
 
     
     @GetMapping("/products")
-    public String products(Model model, HttpSession session) {
-        User currentUser = (User) session.getAttribute("currentUser");
-        List<Product> products = productService.getAllProducts();
-        
-        model.addAttribute("products", products);
-        model.addAttribute("currentUser", currentUser);
-        
-        if (currentUser != null) {
-            Long cartItemCount = cartService.getCartItemCount(currentUser);
-            model.addAttribute("cartItemCount", cartItemCount);
+    public String products(Model model) {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
+            return "redirect:/login";
         }
-        
+
+        String email = auth.getName();
+        User currentUser = userRepository.findByEmail(email).orElse(null);
+
+        if (currentUser != null) {
+            model.addAttribute("currentUser", currentUser);
+            model.addAttribute("cartItemCount", cartService.getCartItemCount(currentUser));
+        }
+
+        List<Product> products = productService.getAllProducts();
+        model.addAttribute("products", products);
+
         return "products";
     }
+
     
     @GetMapping("/admin")
     public String admin(Model model) {
