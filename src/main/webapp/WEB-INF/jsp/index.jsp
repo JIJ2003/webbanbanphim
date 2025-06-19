@@ -33,7 +33,7 @@
           <li class="nav-item"><a class="nav-link active" href="/">Home</a></li>
           <li class="nav-item"><a class="nav-link" href="/products">Products</a></li>
           <c:if test="${not empty currentUser and currentUser.role eq 'ADMIN'}">
-            <li class="nav-item"><a class="nav-link" href="/admin">Admin Panel</a></li>
+            <li class="nav-item"><a class="nav-link" href="/dashboard">Admin Panel</a></li>
           </c:if>
           <c:if test="${not empty currentUser}">
             <li class="nav-item">

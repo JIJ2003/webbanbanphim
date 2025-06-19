@@ -41,7 +41,7 @@ public class SecurityConfig {
 	         .authorizeHttpRequests(authz -> authz
 	             .requestMatchers("/api/products/**", "/api/services/**", "/api/auth/**", "/auth/**").permitAll()
 	             .requestMatchers("/", "/login", "/signup", "/cart", "/checkout", "/client/**", "/static/**", "/css/**", "/js/**", "/images/**").permitAll()
-	             .requestMatchers("/admin").hasRole("ADMIN")
+	             .requestMatchers("/dashboard").hasRole("ADMIN")
 	             .anyRequest().permitAll()
 	         )
 	         .formLogin(form -> form
@@ -56,7 +56,7 @@ public class SecurityConfig {
 	                     request.getSession().setAttribute("currentUser", user);
 	                 }
 	                 // Redirect mặc định
-	                 response.sendRedirect("/admin");  // hoặc "/index" tuỳ role
+	                 response.sendRedirect("/dashboard");  // hoặc "/index" tuỳ role
 	             })
 	             .permitAll()
 	         )

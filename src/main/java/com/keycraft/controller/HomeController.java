@@ -84,15 +84,14 @@ public class HomeController {
     }
 
     
-    @GetMapping("/admin")
-    public String admin(Model model) {
-        org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    @GetMapping("/dashboard")
+    public String dashboard(Model model) {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
             return "redirect:/login?error=access_denied";
         }
 
-        // Lấy email từ principal
         String email = auth.getName();
         User user = userRepository.findByEmail(email).orElse(null);
 
@@ -100,11 +99,20 @@ public class HomeController {
             return "redirect:/login?error=access_denied";
         }
 
+        // Add attribute for dashboard tabs
         model.addAttribute("currentUser", user);
         model.addAttribute("products", productService.getAllProducts());
+        model.addAttribute("users", userRepository.findAll());
 
-        return "admin";
+        // TODO: add orderService.getAllOrders() if you have
+        // model.addAttribute("orders", orderService.getAllOrders());
+
+        // TODO: add serviceBookingService.getAllBookings() if needed
+        // model.addAttribute("services", serviceBookingService.getAll());
+
+        return "dashboard";
     }
+
 
     
     @GetMapping("/login")
@@ -124,5 +132,6 @@ public class HomeController {
         }
         return "signup";
     }
+    
 
 }

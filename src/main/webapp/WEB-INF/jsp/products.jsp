@@ -42,7 +42,7 @@
                     </li>
                     <c:if test="${currentUser != null && currentUser.role == 'ADMIN'}">
                         <li class="nav-item">
-                            <a class="nav-link" href="/admin">Admin Panel</a>
+                            <a class="nav-link" href="/dashboard">Admin Panel</a>
                         </li>
                     </c:if>
  <c:if test="${not empty currentUser}">

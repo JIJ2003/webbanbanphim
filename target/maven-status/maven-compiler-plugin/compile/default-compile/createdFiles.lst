@@ -1,4 +1,5 @@
 com\keycraft\controller\ProductInfoController.class
+com\keycraft\service\UserService.class
 com\keycraft\repository\OrderItemRepository.class
 com\keycraft\repository\ServiceBookingRepository.class
 com\keycraft\service\NotificationService.class
@@ -48,3 +49,4 @@ com\keycraft\service\ReviewService.class
 com\keycraft\model\ServiceBooking.class
 com\keycraft\model\Order$OrderStatus.class
 com\keycraft\controller\ProductController.class
+com\keycraft\controller\UserController.class
