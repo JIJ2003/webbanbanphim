@@ -3,6 +3,7 @@ package com.keycraft.service;
 import com.keycraft.model.User;
 import com.keycraft.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -48,5 +49,14 @@ public class AuthService {
 
     public User createAdminUser(String email, String password, String firstName, String lastName) {
         return registerUser(email, password, firstName, lastName, User.UserRole.ADMIN);
+    }
+    
+    public User getCurrentUser(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        
+        String email = authentication.getName();
+        return userRepository.findByEmail(email).orElse(null);
     }
 }

@@ -42,9 +42,21 @@
                     </li>
                     <c:if test="${currentUser != null && currentUser.role == 'ADMIN'}">
                         <li class="nav-item">
-                            <a class="nav-link" href="/admin">Admin Panel</a>
+                            <a class="nav-link" href="/dashboard">Admin Panel</a>
                         </li>
                     </c:if>
+ <c:if test="${not empty currentUser}">
+  <li class="nav-item">
+    <a class="nav-link" href="/cart">
+      <i class="fas fa-shopping-cart"></i>
+      Cart
+      <c:if test="${cartItemCount > 0}">
+        <span id="cart-count" class="badge bg-warning text-dark">${cartItemCount}</span>
+      </c:if>
+    </a>
+  </li>
+</c:if>
+
                 </ul>
                 <ul class="navbar-nav">
                     <c:choose>
@@ -252,46 +264,68 @@
             }
         }
         
-        function addToCart(productId) {
-            $.ajax({
-                url: '/api/cart/add',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    productId: productId,
-                    quantity: 1
-                }),
-                success: function(response) {
-                    // Show success message
-                    showToast('Product added to cart!', 'success');
-                    updateCartCount();
-                },
-                error: function(xhr) {
-                    if (xhr.status === 401) {
-                        // User not logged in
-                        if (confirm('Please log in to add items to cart. Would you like to go to login page?')) {
-                            window.location.href = '/login';
-                        }
-                    } else {
-                        showToast('Failed to add product to cart', 'error');
-                    }
-                }
-            });
+        function addToCart(productId, quantity = 1) {
+          fetch('/cart/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ productId, quantity })
+          })
+          .then(r => r.json())
+          .then(data => {
+            if (data.success) {
+              showToast(data.message, 'success');
+              // 1) cập nhật badge ngay
+              updateCartBadge(data.cartItemCount);
+            } else {
+              showToast(data.message, 'error');
+            }
+          })
+          .catch(err => {
+            console.error('Fetch error:', err);
+            showToast('Error adding to cart', 'error');
+          });
         }
+
+        function updateCartBadge(count) {
+          const badge = document.getElementById('cart-count');
+          if (badge) {
+            badge.textContent = count;
+            if (count > 0) badge.style.display = 'inline-block';
+            else badge.style.display = 'none';
+          }
+        }
+
+
         
         function updateCartCount() {
-            $.ajax({
-                url: '/api/cart',
-                method: 'GET',
-                success: function(cartItems) {
-                    const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-                    $('#cartCount').text(totalItems);
-                    if (totalItems > 0) {
-                        $('#cartCount').show();
-                    }
-                }
-            });
-        }
+        	  $.ajax({
+        	    url: '/cart/count',
+        	    method: 'GET'
+        	  })
+        	  .done(function(response) {
+        	    const total = response.cartItemCount || 0;
+        	    const $badge = $('#cart-count');
+        	    
+        	    if (total > 0) {
+        	      if ($badge.length) {
+        	        $badge.text(total);
+        	      } else {
+        	        $('.nav-link[href="/cart"]').append(
+        	          `<span id="cart-count" class="badge bg-warning text-dark ms-1">${total}</span>`
+        	        );
+        	      }
+        	    } else {
+        	      $badge.remove();
+        	    }
+        	  })
+        	  .fail(function() {
+        	    console.error('Failed to fetch cart count');
+        	  });
+        	}
+
+        	$(document).ready(function() {
+        	  updateCartCount(); // Load badge when page loads
+        	});
         
         function showToast(message, type) {
             const toastClass = type === 'success' ? 'bg-success' : 'bg-danger';

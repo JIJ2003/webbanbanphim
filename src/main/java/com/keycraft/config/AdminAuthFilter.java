@@ -21,7 +21,7 @@ public class AdminAuthFilter implements Filter {
 	    
 	    String requestURI = httpRequest.getRequestURI();
 	    
-	    if (requestURI.startsWith("/api/admin/") || 
+	    if (requestURI.startsWith("/api/dashboard/") || 
 	        (requestURI.startsWith("/api/products") && 
 	         ("POST".equals(httpRequest.getMethod()) || 
 	          "PUT".equals(httpRequest.getMethod()) || 

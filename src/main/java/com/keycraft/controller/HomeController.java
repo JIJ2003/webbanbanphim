@@ -1,8 +1,10 @@
 package com.keycraft.controller;
 
+import com.keycraft.model.CartItem;
 import com.keycraft.model.Product;
 import com.keycraft.model.User;
 import com.keycraft.repository.UserRepository;
+import com.keycraft.service.CartService;
 import com.keycraft.service.CustomUserDetailsService;
 import com.keycraft.service.ProductService;
 import jakarta.servlet.http.HttpSession;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.security.Principal;
 import java.util.List;
 
 @Controller
@@ -23,6 +26,8 @@ public class HomeController {
     private ProductService productService;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private CartService cartService;
 
     @GetMapping("/")
     public String homeRedirect() {
@@ -46,6 +51,10 @@ public class HomeController {
 
         model.addAttribute("currentUser", user);
         model.addAttribute("featuredProducts", productService.getFeaturedProducts());
+        
+     // ← **Thêm dòng này** để badge Cart biết có bao nhiêu item
+        Long cartItemCount = cartService.getCartItemCount(user);
+        model.addAttribute("cartItemCount", cartItemCount);
 
         return "index";
     }
@@ -53,25 +62,36 @@ public class HomeController {
 
     
     @GetMapping("/products")
-    public String products(Model model, HttpSession session) {
-        User currentUser = (User) session.getAttribute("currentUser");
+    public String products(Model model) {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
+            return "redirect:/login";
+        }
+
+        String email = auth.getName();
+        User currentUser = userRepository.findByEmail(email).orElse(null);
+
+        if (currentUser != null) {
+            model.addAttribute("currentUser", currentUser);
+            model.addAttribute("cartItemCount", cartService.getCartItemCount(currentUser));
+        }
+
         List<Product> products = productService.getAllProducts();
-        
         model.addAttribute("products", products);
-        model.addAttribute("currentUser", currentUser);
-        
+
         return "products";
     }
+
     
-    @GetMapping("/admin")
-    public String admin(Model model) {
-        org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    @GetMapping("/dashboard")
+    public String dashboard(Model model) {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
             return "redirect:/login?error=access_denied";
         }
 
-        // Lấy email từ principal
         String email = auth.getName();
         User user = userRepository.findByEmail(email).orElse(null);
 
@@ -79,11 +99,20 @@ public class HomeController {
             return "redirect:/login?error=access_denied";
         }
 
+        // Add attribute for dashboard tabs
         model.addAttribute("currentUser", user);
         model.addAttribute("products", productService.getAllProducts());
+        model.addAttribute("users", userRepository.findAll());
 
-        return "admin";
+        // TODO: add orderService.getAllOrders() if you have
+        // model.addAttribute("orders", orderService.getAllOrders());
+
+        // TODO: add serviceBookingService.getAllBookings() if needed
+        // model.addAttribute("services", serviceBookingService.getAll());
+
+        return "dashboard";
     }
+
 
     
     @GetMapping("/login")
@@ -103,4 +132,6 @@ public class HomeController {
         }
         return "signup";
     }
+    
+
 }
