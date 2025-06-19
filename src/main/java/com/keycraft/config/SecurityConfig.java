@@ -49,15 +49,21 @@ public class SecurityConfig {
 	             .loginProcessingUrl("/auth/login") // xử lý POST form
 	             
 	             .successHandler((request, response, authentication) -> {
-	                 // Lấy email
-	                 String email = authentication.getName();
-	                 User user = userRepository.findByEmail(email).orElse(null);
-	                 if (user != null) {
-	                     request.getSession().setAttribute("currentUser", user);
-	                 }
-	                 // Redirect mặc định
-	                 response.sendRedirect("/dashboard");  // hoặc "/index" tuỳ role
-	             })
+	            	    String email = authentication.getName();
+	            	    User user = userRepository.findByEmail(email).orElse(null);
+	            	    if (user != null) {
+	            	        request.getSession().setAttribute("currentUser", user);
+
+	            	        // 👇 Redirect tùy theo role
+	            	        if (user.getRole() == User.UserRole.ADMIN) {
+	            	            response.sendRedirect("/dashboard");
+	            	        } else {
+	            	            response.sendRedirect("/"); // Hoặc "/index"
+	            	        }
+	            	    } else {
+	            	        response.sendRedirect("/login?error=true"); // fallback
+	            	    }
+	            	})
 	             .permitAll()
 	         )
 	         .logout(logout -> logout

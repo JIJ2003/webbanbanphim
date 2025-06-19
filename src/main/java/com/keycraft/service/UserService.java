@@ -20,6 +20,10 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    public String encodePassword(String rawPassword) {
+        return passwordEncoder.encode(rawPassword);
+    }
+
     public List<User> findAll() {
         return userRepository.findAll();
     }

@@ -352,6 +352,8 @@
           <div class="mb-3">
             <label class="form-label">Password</label>
             <input type="password" class="form-control" id="addUserPassword" required>
+            <small class="form-text text-muted">Leave blank to keep current password</small>
+        
           </div>
         </div>
         <div class="modal-footer">
@@ -478,13 +480,19 @@ window.editUser = function(id) {
 $('#editUserForm').submit(function(e) {
   e.preventDefault();
   const id = $('#editUserId').val();
+  const password = $('#editUserPassword').val();
+
   const data = {
-		  email: $('#editUserEmail').val(),
-		  firstName: $('#editUserFirstName').val(),
-		  lastName: $('#editUserLastName').val(),
-		  role: $('#editUserRole').val(),
-		  password: $('#editUserPassword').val()
-		};
+    email: $('#editUserEmail').val(),
+    firstName: $('#editUserFirstName').val(),
+    lastName: $('#editUserLastName').val(),
+    role: $('#editUserRole').val()
+  };
+
+  // Chỉ thêm password nếu người dùng nhập
+  if (password.trim() !== '') {
+    data.password = password;
+  }
 
   $.ajax({
     url: '/api/users/' + id,
@@ -494,6 +502,7 @@ $('#editUserForm').submit(function(e) {
     success: () => location.reload()
   });
 });
+
 
 // Delete user
 window.deleteUser = function(id) {

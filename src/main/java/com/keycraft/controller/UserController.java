@@ -94,10 +94,26 @@ public class UserController {
                     .body(Map.of("message", "Admin access required"));
         }
 
-        Optional<User> updated = userService.updateUser(id, updatedUser);
-        return updated.<ResponseEntity<?>>map(ResponseEntity::ok)
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("message", "User not found")));
+        // 🔧 Xử lý password tại đây nếu trống thì giữ nguyên
+        Optional<User> existingOpt = userRepository.findById(id);
+        if (existingOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "User not found"));
+        }
+
+        User existing = existingOpt.get();
+        
+        // Nếu password trống thì giữ nguyên
+        if (updatedUser.getPassword() == null || updatedUser.getPassword().isBlank()) {
+            updatedUser.setPassword(existing.getPassword()); // đã được mã hoá
+        } else {
+            updatedUser.setPassword(userService.encodePassword(updatedUser.getPassword()));
+        }
+
+        updatedUser.setId(id); // đảm bảo ID không bị mất
+
+        User saved = userRepository.save(updatedUser);
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/{id}")
@@ -121,5 +137,6 @@ public class UserController {
                     .body(Map.of("message", "User not found"));
         }
     }
+    
     
 }
