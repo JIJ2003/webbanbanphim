@@ -67,28 +67,38 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <strong>Order Date:</strong><br>
-                                <fmt:formatDate value="${order.createdAt}" pattern="MMM dd, yyyy 'at' HH:mm" />
+<fmt:formatDate value="${createdAtDate}" pattern="MMM dd, yyyy 'at' HH:mm" />
                             </div>
                             <div class="col-md-6">
-                                <strong>Status:</strong><br>
-                                <c:choose>
-                                    <c:when test="${order.status == 'PENDING'}">
-                                        <span class="badge bg-warning">Pending</span>
-                                    </c:when>
-                                    <c:when test="${order.status == 'CONFIRMED'}">
-                                        <span class="badge bg-success">Confirmed</span>
-                                    </c:when>
-                                    <c:when test="${order.status == 'SHIPPED'}">
-                                        <span class="badge bg-info">Shipped</span>
-                                    </c:when>
-                                    <c:when test="${order.status == 'DELIVERED'}">
-                                        <span class="badge bg-primary">Delivered</span>
-                                    </c:when>
-                                    <c:when test="${order.status == 'CANCELLED'}">
-                                        <span class="badge bg-danger">Cancelled</span>
-                                    </c:when>
-                                </c:choose>
-                            </div>
+    <strong>Status:</strong><br>
+    <c:choose>
+        <c:when test="${order.status == 'PENDING'}">
+            <span class="badge bg-warning">Pending</span>
+        </c:when>
+        <c:when test="${order.status == 'CONFIRMED'}">
+            <span class="badge bg-success">Confirmed</span>
+        </c:when>
+        <c:when test="${order.status == 'SHIPPED'}">
+            <span class="badge bg-info">Shipped</span>
+            <c:if test="${not empty order.trackingCode}">
+                <div class="mt-1 text-muted">Tracking: <code>${order.trackingCode}</code></div>
+            </c:if>
+        </c:when>
+        <c:when test="${order.status == 'DELIVERED'}">
+            <span class="badge bg-primary">Delivered</span>
+            <c:if test="${not empty order.trackingCode}">
+                <div class="mt-1 text-muted">Tracking: <code>${order.trackingCode}</code></div>
+            </c:if>
+        </c:when>
+        <c:when test="${order.status == 'CANCELLED'}">
+            <span class="badge bg-danger">Cancelled</span>
+            <c:if test="${not empty order.trackingCode}">
+                <div class="mt-1 text-muted">RETURNED: <code>${order.trackingCode}</code></div>
+            </c:if>
+        </c:when>
+    </c:choose>
+</div>
+
                         </div>
                     </div>
                 </div>

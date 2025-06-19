@@ -1,11 +1,13 @@
 package com.keycraft.controller;
 
 import com.keycraft.model.CartItem;
+import com.keycraft.model.Order;
 import com.keycraft.model.Product;
 import com.keycraft.model.User;
 import com.keycraft.repository.UserRepository;
 import com.keycraft.service.CartService;
 import com.keycraft.service.CustomUserDetailsService;
+import com.keycraft.service.OrderService;
 import com.keycraft.service.ProductService;
 import jakarta.servlet.http.HttpSession;
 
@@ -28,6 +30,8 @@ public class HomeController {
     private UserRepository userRepository;
     @Autowired
     private CartService cartService;
+    @Autowired
+    private OrderService orderService;
 
     @GetMapping("/")
     public String homeRedirect() {
@@ -103,6 +107,9 @@ public class HomeController {
         model.addAttribute("currentUser", user);
         model.addAttribute("products", productService.getAllProducts());
         model.addAttribute("users", userRepository.findAll());
+        model.addAttribute("orders", orderService.getAllOrders());
+        model.addAttribute("orderStatuses", Order.OrderStatus.values());
+
 
         // TODO: add orderService.getAllOrders() if you have
         // model.addAttribute("orders", orderService.getAllOrders());
@@ -132,6 +139,5 @@ public class HomeController {
         }
         return "signup";
     }
-    
 
 }

@@ -3,6 +3,7 @@ com\keycraft\service\UserService.class
 com\keycraft\repository\OrderItemRepository.class
 com\keycraft\repository\ServiceBookingRepository.class
 com\keycraft\service\NotificationService.class
+com\keycraft\controller\OrderRestController.class
 com\keycraft\repository\UserRepository.class
 com\keycraft\repository\NotificationRepository.class
 com\keycraft\config\DataInitializer.class
@@ -29,6 +30,7 @@ com\keycraft\repository\CartItemRepository.class
 com\keycraft\config\AdminAuthFilter.class
 com\keycraft\controller\ServiceBookingController.class
 com\keycraft\KeycraftEcommerceApplication.class
+com\keycraft\controller\OrderRestController$1.class
 com\keycraft\service\CustomUserDetailsService.class
 com\keycraft\model\Review.class
 com\keycraft\controller\OrderController.class

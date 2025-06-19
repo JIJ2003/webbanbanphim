@@ -100,4 +100,9 @@ public class OrderItem {
     public void setSubtotal(BigDecimal subtotal) {
         this.subtotal = subtotal;
     }
+    @Transient
+    public BigDecimal getTotalPrice() {
+        return this.subtotal;
+    }
+
 }

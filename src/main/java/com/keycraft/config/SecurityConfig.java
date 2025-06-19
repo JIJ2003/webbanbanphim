@@ -84,7 +84,7 @@ public class SecurityConfig {
 	 @Bean
 	 public CorsConfigurationSource corsConfigurationSource() {
 	     CorsConfiguration config = new CorsConfiguration();
-	     config.setAllowCredentials(false); // ✅ Có thể giữ true
+	     config.setAllowCredentials(true); // ✅ Có thể giữ true
 	     config.setAllowedOriginPatterns(List.of("http://localhost:8080")); // ✅ Đúng cách thay thế "*"
 	     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 	     config.setAllowedHeaders(List.of("*"));

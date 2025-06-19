@@ -1,9 +1,11 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ page import="com.keycraft.model.Order.OrderStatus" %>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8">  
   <title>Dashboard - KeyCraft</title>
   <link href="/webjars/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -106,9 +108,18 @@
                 <td>${p.brand}</td>
                 <td>$${p.price}</td>
                 <td>
-                  <span class="badge ${p.stock > 10 ? 'bg-success' : p.stock > 0 ? 'bg-warning' : 'bg-danger'}">
-                    ${p.stock}
-                  </span>
+<c:choose>
+  <c:when test="${p.stock > 10}">
+    <span class="badge bg-success">${p.stock}</span>
+  </c:when>
+  <c:when test="${p.stock > 0}">
+    <span class="badge bg-warning">${p.stock}</span>
+  </c:when>
+  <c:otherwise>
+    <span class="badge bg-danger">${p.stock}</span>
+  </c:otherwise>
+</c:choose>
+
                 </td>
                 <td>
                   <c:choose>
@@ -136,9 +147,69 @@
     </div>
 
     <!-- Orders -->
+    
+    <!-- Orders Tab Content -->
     <div class="tab-pane fade" id="orders">
-      <h4><i class="fas fa-receipt"></i> Order Management</h4>
-      <div class="alert alert-info">Coming soon: Order integration</div>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>User</th>
+            <th>Created At</th>
+            <th>Status</th>
+            <th>Total</th>
+            <th>Tracking Code</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <c:forEach items="${orders}" var="o">
+            <tr>
+              <td>#${o.id}</td>
+              <td>${o.user.firstName} ${o.user.lastName}</td>
+              <td>${o.createdAt}</td>
+              <td>
+                <select class="form-select form-select-sm order-status" data-id="${o.id}">
+  <c:forEach var="s" items="${['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED']}">
+    <c:choose>
+      <c:when test="${o.status.name() == s}">
+        <option value="${s}" selected>${s}</option>
+      </c:when>
+      <c:otherwise>
+        <option value="${s}">${s}</option>
+      </c:otherwise>
+    </c:choose>
+  </c:forEach>
+</select>
+
+              </td>
+              <td>$${o.totalAmount}</td>
+              <td>
+                <c:choose>
+                  <c:when test="${o.status != 'SHIPPED'}">
+                    <input type="text" class="form-control form-control-sm tracking-input" 
+                           data-id="${o.id}" value="${o.trackingCode}" 
+                           placeholder="Tracking code" disabled/>
+                  </c:when>
+                  <c:otherwise>
+                    <input type="text" class="form-control form-control-sm tracking-input" 
+                           data-id="${o.id}" value="${o.trackingCode}" 
+                           placeholder="Tracking code"/>
+                  </c:otherwise>
+                </c:choose>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-success save-order" data-id="${o.id}">
+                  <i class="fas fa-save"></i> Save
+                </button>
+                <a href="/orders/${o.id}" class="btn btn-sm btn-outline-secondary">
+                  <i class="fas fa-eye"></i>
+                </a>
+              </td>
+            </tr>
+          </c:forEach>
+        </tbody>
+      </table>
     </div>
 
     <!-- Services -->
@@ -526,6 +597,35 @@ $(function () {
   if (activeTab) {
     $('#adminTabs a[href="' + activeTab + '"]').tab('show');
   }
+});
+
+//order
+$(function(){
+  $('.order-status').on('change', function () {
+    const id = $(this).data('id');
+    const newStatus = $(this).val();
+    const trackingInput = $('.tracking-input[data-id="' + id + '"]');
+    if (newStatus === 'SHIPPING') {
+      trackingInput.prop('disabled', false);
+    } else {
+      trackingInput.prop('disabled', true).val('');
+    }
+  });
+
+  $('.save-order').on('click', function () {
+    const id = $(this).data('id');
+    const status = $('.order-status[data-id="' + id + '"]').val();
+    const trackingCode = $('.tracking-input[data-id="' + id + '"]').val();
+
+    $.ajax({
+      url: '/api/orders/' + id,
+      type: 'PUT',
+      contentType: 'application/json',
+      data: JSON.stringify({ status, trackingCode }),
+      success: () => location.reload(),
+      error: () => alert("Failed to update order.")
+    });
+  });
 });
 
 

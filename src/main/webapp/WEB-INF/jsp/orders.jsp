@@ -70,7 +70,7 @@
                                         <div class="col-md-6">
                                             <h6 class="mb-0">Order #${order.id}</h6>
                                             <small class="text-muted">
-                                                <fmt:formatDate value="${order.createdAt}" pattern="MMM dd, yyyy 'at' HH:mm" />
+<fmt:formatDate value="${order.createdAtDate}" pattern="MMM dd, yyyy 'at' HH:mm" />
                                             </small>
                                         </div>
                                         <div class="col-md-3 text-center">
@@ -127,6 +127,11 @@
                                             <a href="/orders/${order.id}" class="btn btn-outline-primary">
                                                 <i class="fas fa-eye"></i> View Details
                                             </a>
+                                            <c:if test="${order.status == 'PENDING' || order.status == 'CONFIRMED'}">
+        <button class="btn btn-outline-danger ms-2 cancel-order-btn" data-id="${order.id}">
+            <i class="fas fa-times"></i> Cancel Order
+        </button>
+    </c:if>
                                         </div>
                                     </div>
                                 </div>
@@ -140,5 +145,23 @@
 
     <script src="/webjars/jquery/jquery.min.js"></script>
     <script src="/webjars/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script>
+  $(function () {
+    $('.cancel-order-btn').on('click', function () {
+      const id = $(this).data('id');
+      if (confirm("Are you sure you want to cancel order #" + id + "?")) {
+        $.ajax({
+          url: '/api/orders/' + id,
+          type: 'PUT',
+          contentType: 'application/json',
+          data: JSON.stringify({ status: 'CANCELLED' }),
+          success: () => location.reload(),
+          error: () => alert("Failed to cancel order.")
+        });
+      }
+    });
+  });
+</script>
+    
 </body>
 </html>
