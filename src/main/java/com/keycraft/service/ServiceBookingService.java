@@ -12,34 +12,23 @@ import java.util.Optional;
 public class ServiceBookingService {
 
     @Autowired
-    private ServiceBookingRepository serviceBookingRepository;
+    private ServiceBookingRepository repo;
 
-    public List<ServiceBooking> getAllServiceBookings() {
-        return serviceBookingRepository.findByOrderByCreatedAtDesc();
+    public List<ServiceBooking> findAll() {
+        return repo.findAllByOrderByCreatedAtDesc();
     }
 
-    public Optional<ServiceBooking> getServiceBookingById(Long id) {
-        return serviceBookingRepository.findById(id);
+    public Optional<ServiceBooking> findById(Long id) {
+        return repo.findById(id);
     }
 
-    public ServiceBooking saveServiceBooking(ServiceBooking serviceBooking) {
-        return serviceBookingRepository.save(serviceBooking);
+    public ServiceBooking save(ServiceBooking b) {
+        return repo.save(b);
     }
 
-    public ServiceBooking updateStatus(Long id, String status) {
-        return serviceBookingRepository.findById(id)
-                .map(booking -> {
-                    booking.setStatus(status);
-                    return serviceBookingRepository.save(booking);
-                })
-                .orElseThrow(() -> new RuntimeException("Service booking not found with id: " + id));
+    public void delete(Long id) {
+        repo.deleteById(id);
     }
 
-    public void deleteServiceBooking(Long id) {
-        if (serviceBookingRepository.existsById(id)) {
-            serviceBookingRepository.deleteById(id);
-        } else {
-            throw new RuntimeException("Service booking not found with id: " + id);
-        }
-    }
+
 }

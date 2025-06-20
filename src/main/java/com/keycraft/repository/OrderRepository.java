@@ -25,4 +25,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT DISTINCT o FROM Order o JOIN o.orderItems oi WHERE oi.product.id = :productId AND o.user.id = :userId AND o.status = 'DELIVERED'")
     List<Order> findDeliveredOrdersByUserAndProduct(@Param("userId") Long userId, @Param("productId") Long productId);
 
+	boolean existsByUserIdAndStatusNot(Long id, OrderStatus cancelled);
+
+	void deleteAllByUserIdAndStatus(Long id, OrderStatus cancelled);
+
 }
