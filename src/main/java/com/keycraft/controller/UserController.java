@@ -80,7 +80,7 @@ public class UserController {
     }
 
 
-    
+
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @Valid @RequestBody User updatedUser) {
         User currentUser = getAuthenticatedUser();
@@ -102,7 +102,7 @@ public class UserController {
         }
 
         User existing = existingOpt.get();
-        
+
         // Nếu password trống thì giữ nguyên
         if (updatedUser.getPassword() == null || updatedUser.getPassword().isBlank()) {
             updatedUser.setPassword(existing.getPassword()); // đã được mã hoá
@@ -137,6 +137,6 @@ public class UserController {
                     .body(Map.of("message", "User not found"));
         }
     }
-    
-    
+
+
 }

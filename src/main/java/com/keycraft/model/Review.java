@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 @Table(name = "reviews")
@@ -45,7 +46,7 @@ public class Review {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
-    
+
     // Constructor with parameters
     public Review(User user, Product product, Integer rating, String comment, Boolean verified) {
         this.user = user;
@@ -131,5 +132,21 @@ public class Review {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+    public String getCreatedAtFormatted() {
+        if (this.createdAt == null) {
+            return "";
+        }
+        // Bạn có thể tùy chỉnh định dạng ở đây, ví dụ: "dd/MM/yyyy HH:mm"
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+        return this.createdAt.format(formatter);
+    }
+
+    // PHƯƠNG THỨC MỚI 2: Để lấy tên đầy đủ của người dùng
+    public String getUserFullName() {
+        if (this.user != null) {
+            return this.user.getFirstName() + " " + this.user.getLastName();
+        }
+        return "Anonymous"; // Hoặc một giá trị mặc định nào đó
     }
 }

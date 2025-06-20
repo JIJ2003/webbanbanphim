@@ -73,14 +73,19 @@ public class OrderService {
         return orderRepository.findById(orderId);
     }
 
-    public Order updateOrderStatus(Long orderId, Order.OrderStatus status) {
-        Optional<Order> orderOpt = orderRepository.findById(orderId);
-        if (orderOpt.isPresent()) {
-            Order order = orderOpt.get();
-            order.setStatus(status);
-            return orderRepository.save(order);
+    public Order updateStatusAndTracking(Long orderId, String status, String trackingCode) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        order.setStatus(Order.OrderStatus.valueOf(status)); // Chuyển String thành Enum
+
+        if (order.getStatus() == Order.OrderStatus.SHIPPED) {
+            order.setTrackingCode(trackingCode);
+        } else {
+            order.setTrackingCode(null); // Xóa tracking code nếu không ở trạng thái SHIPPED
         }
-        return null;
+
+        return orderRepository.save(order);
     }
 
     public List<Order> getAllOrders() {
