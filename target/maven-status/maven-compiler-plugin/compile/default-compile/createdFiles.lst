@@ -9,6 +9,7 @@ com\keycraft\repository\NotificationRepository.class
 com\keycraft\config\DataInitializer.class
 com\keycraft\model\User$UserRole.class
 com\keycraft\repository\OrderRepository.class
+com\keycraft\service\OrderItemService.class
 com\keycraft\controller\CheckoutController.class
 com\keycraft\service\ReviewService$ReviewStats.class
 com\keycraft\repository\ReviewRepository.class

@@ -1,8 +1,11 @@
 package com.keycraft.service;
 
 import com.keycraft.model.*;
+import com.keycraft.model.Order.OrderStatus;
 import com.keycraft.repository.OrderRepository;
 import com.keycraft.repository.CartItemRepository;
+import com.keycraft.repository.OrderItemRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +27,10 @@ public class OrderService {
 
     @Autowired
     private CartService cartService;
+    
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+
 
     public Order createOrderFromCart(User user, String fullAddress, String paymentMethod) {
         List<CartItem> cartItems = cartService.getCartItems(user);
@@ -63,6 +70,10 @@ public class OrderService {
         cartService.clearCart(user);
 
         return orderRepository.save(order);
+    }
+    
+    public boolean existsInActiveOrders(Long productId) {
+        return orderItemRepository.existsByProductIdAndOrderStatusNot(productId, OrderStatus.CANCELLED);
     }
 
     public List<Order> getUserOrders(User user) {

@@ -128,4 +128,31 @@ public class ProductController {
                     .body(Map.of("message", "Product not found"));
         }
     }
+    @PutMapping("/{id}/discontinue")
+    public ResponseEntity<?> discontinueProduct(@PathVariable Long id) {
+        User currentUser = getAuthenticatedUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "You need to login"));
+        }
+
+        if (currentUser.getRole() != User.UserRole.ADMIN) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "Admin access required"));
+        }
+
+        try {
+            boolean result = productService.discontinueProduct(id);
+            if (result) {
+                return ResponseEntity.ok().body(Map.of("message", "Product marked as discontinued"));
+            } else {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("message", "Product is still used in active orders"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Error: " + e.getMessage()));
+        }
+    }
+
 }

@@ -14,6 +14,9 @@ public class ProductService {
 
     @Autowired
     private ProductRepository productRepository;
+    
+    @Autowired
+    private OrderItemService orderItemService;
 
     public List<Product> getAllProducts() {
         return productRepository.findAll();
@@ -55,15 +58,35 @@ public class ProductService {
                     product.setLayout(updatedProduct.getLayout());
                     product.setStock(updatedProduct.getStock());
                     product.setFeatured(updatedProduct.getFeatured());
+                    product.setDiscontinued(updatedProduct.isDiscontinued());
+
                     return Optional.of(productRepository.save(product));
 
     }
 
     public boolean deleteProduct(Long id) {
-        Optional<Product> existing = productRepository.findById(id);
-        if (existing.isEmpty()) return false;
+        Product product = productRepository.findById(id).orElse(null);
+        if (product == null) return false;
 
-        productRepository.deleteById(id);
+        if (orderItemService.existsInActiveOrders(id)) {
+            return false; // Không xoá được nếu còn trong đơn chưa huỷ
+        }
+
+        product.setDiscontinued(true);
+        productRepository.save(product);
         return true;
     }
+    public boolean discontinueProduct(Long id) {
+        Product product = productRepository.findById(id).orElse(null);
+        if (product == null) return false;
+
+        // Kiểm tra xem sản phẩm có đang nằm trong order chưa huỷ không
+        boolean usedInActiveOrders = orderItemService.existsInActiveOrders(id);
+        if (usedInActiveOrders) return false;
+
+        product.setDiscontinued(true);
+        productRepository.save(product);
+        return true;
+    }
+    
 }
