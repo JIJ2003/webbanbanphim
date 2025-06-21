@@ -220,7 +220,7 @@
             <!-- Reviews List -->
             <div id="reviews-list">
                 <c:forEach var="review" items="${reviews}">
-                    <div class="card mb-3">
+                    <div class="card mb-3" id="review-${review.id}">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
@@ -247,6 +247,16 @@
                                 <small class="text-muted">
                                         ${review.createdAtFormatted}
                                 </small>
+                                <c:if test="${user != null && user.id == review.user.id}">
+
+                                    <div class\="ms\-2"\>
+
+                                        <button class="btn btn-sm btn-outline-danger delete-review-btn"
+                                                data-review-id="${review.id}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </c:if>
                             </div>
                             <p class="card-text">${review.comment}</p>
                         </div>
@@ -277,88 +287,39 @@
 </div>
 
 <script>
-    let selectedRating = 0;
-    const ratingStars = document.querySelectorAll('#rating-input i');
+    // =================================================================
+    // PHẦN 1: ĐỊNH NGHĨA CÁC HÀM TIỆN ÍCH VÀ BIẾN TOÀN CỤC
+    // =================================================================
 
-    ratingStars.forEach(star => {
-        star.addEventListener('mouseover', () => {
-            highlightStars(parseInt(star.dataset.rating));
-        });
-        star.addEventListener('mouseout', () => {
-            highlightStars(selectedRating);
-        });
-        star.addEventListener('click', () => {
-            selectedRating = parseInt(star.dataset.rating);
-            document.getElementById('rating').value = selectedRating;
-            highlightStars(selectedRating);
-        });
-    });
+    // Đọc token CSRF một lần duy nhất để tái sử dụng
+    const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+    const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
+    const csrfHeaders = csrfToken ? { [csrfHeader]: csrfToken } : {};
 
-    function highlightStars(rating) {
-        ratingStars.forEach(star => {
-            const r = parseInt(star.dataset.rating);
-            if (r <= rating) {
-                star.classList.remove('far');
-                star.classList.add('fas');
-            } else {
-                star.classList.remove('fas');
-                star.classList.add('far');
-            }
-        });
+    function showToast(message, type = 'info') {
+        const toastEl = document.getElementById("notification-toast");
+        const toastBody = document.getElementById("toast-message");
+        if(toastEl && toastBody) {
+            toastBody.textContent = message;
+            toastBody.className = `toast-body ${type == 'success' ? 'text-success' : 'text-danger'}`;
+            new bootstrap.Toast(toastEl).show();
+        }
     }
 
-    // Submit review
-    document.getElementById("review-form")?.addEventListener("submit", function (e) {
-        e.preventDefault();
-        const comment = document.getElementById("comment").value.trim();
-        const productId = this.dataset.productId;
+    function updateCartBadge(count) {
+        const cartCountEl = document.getElementById("cart-count");
+        if(cartCountEl) cartCountEl.textContent = count;
+    }
 
-        if (!selectedRating || selectedRating < 1 || selectedRating > 5) {
-            showToast("Please select a rating", "error");
-            return;
-        }
-
-        if (!comment) {
-            showToast("Please enter your review", "error");
-            return;
-        }
-
-        fetch("/reviews/create", {
-            method: "POST",
-            headers: {"Content-Type": "application/x-www-form-urlencoded"},
-            body: new URLSearchParams({productId, rating: selectedRating, comment})
+    function addToCart(productId) {
+        const quantity = document.getElementById('quantity')?.value || 1;
+        fetch('/cart/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...csrfHeaders },
+            body: new URLSearchParams({ productId, quantity })
         })
             .then(res => res.json())
             .then(data => {
-                showToast(data.message || "Review submitted", data.success ? 'success' : 'error');
-                if (data.success) {
-                    setTimeout(() => window.location.reload(), 1000);
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                showToast("Error submitting review", "error");
-            });
-    });
-
-    // Add to cart
-    function addToCart(productId, quantity = 1) {
-        fetch('/cart/add', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: new URLSearchParams({productId, quantity})
-        })
-            .then(async res => {
-                if (!res.ok) {
-                    throw new Error('Server error: ' + res.status);
-                }
-                let data;
-                try {
-                    data = await res.json();
-                } catch (e) {
-                    throw new Error('Invalid JSON');
-                }
-
                 if (data.success) {
                     showToast(data.message, 'success');
                     updateCartBadge(data.cartItemCount);
@@ -366,34 +327,172 @@
                     showToast(data.message || 'Thêm sản phẩm thất bại', 'error');
                 }
             })
-            .catch(err => {
-                console.error(err);
-                showToast('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng', 'error');
+            .catch(err => showToast('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng', 'error'));
+    }
+
+    function deleteReview(reviewId) {
+        const url = `/reviews/${reviewId}`;
+        fetch(url, {
+            method: 'DELETE',
+            headers: csrfHeaders
+        })
+            .then(res => {
+                if (res.ok) {
+                    showToast('Review deleted successfully', 'success');
+                    // Sửa lỗi tìm element: dùng "review-"
+                    const reviewElement = document.getElementById(`review-${reviewId}`);
+                    if (reviewElement) reviewElement.remove();
+                } else {
+                    return res.json().then(err => { throw new Error(err.message || 'Failed to delete review') });
+                }
+            })
+            .catch(err => showToast(err.message, 'error'));
+    }
+
+    // =================================================================
+    // PHẦN 2: GẮN SỰ KIỆN KHI TRANG ĐÃ SẴN SÀNG
+    // =================================================================
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // --- Logic cho form TẠO review ---
+        const reviewForm = document.getElementById("review-form");
+        if (reviewForm) {
+            let createSelectedRating = 0;
+            const createRatingStars = reviewForm.querySelectorAll('#rating-input i');
+            const highlightCreateStars = (rating) => {
+                createRatingStars.forEach(star => {
+                    star.classList.toggle('fas', parseInt(star.dataset.rating) <= rating);
+                    star.classList.toggle('far', parseInt(star.dataset.rating) > rating);
+                });
+            };
+            createRatingStars.forEach(star => {
+                star.addEventListener('mouseover', () => highlightCreateStars(parseInt(star.dataset.rating)));
+                star.addEventListener('mouseout', () => highlightCreateStars(createSelectedRating));
+                star.addEventListener('click', () => {
+                    createSelectedRating = parseInt(star.dataset.rating);
+                    reviewForm.querySelector('#rating').value = createSelectedRating;
+                });
             });
-    }
 
-    // Toast
-    function showToast(message, type = 'info') {
-        const toastMessage = document.getElementById("toast-message");
-        toastMessage.textContent = message;
-        toastMessage.className = 'toast-body'; // reset
-        toastMessage.classList.add(
-            type === 'success' ? 'text-success' :
-                type === 'error' ? 'text-danger' : 'text-info'
-        );
-        const toast = new bootstrap.Toast(document.getElementById("notification-toast"));
-        toast.show();
-    }
+            reviewForm.addEventListener("submit", function (e) {
+                e.preventDefault();
+                const comment = reviewForm.querySelector("#comment").value.trim();
+                const productId = this.dataset.productId;
+                const rating = createSelectedRating;
 
-    function updateCartBadge(count) { // Đặt breakpoint tại đây
-        debugger;
-        const cartCountElement = document.getElementById("cart-count");
-        if (cartCountElement) {
-            cartCountElement.textContent = count;
+                if (!rating) return showToast("Please select a rating", "error");
+                if (!comment) return showToast("Please enter your review", "error");
+
+                fetch("/reviews/create", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded", ...csrfHeaders },
+                    body: new URLSearchParams({ productId, rating, comment })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        showToast(data.message || "Review submitted!", 'success');
+                        if (data && data.id) {
+                            setTimeout(() => window.location.reload(), 1500);
+                        }
+                    })
+                    .catch(err => showToast("Error submitting review", "error"));
+            });
         }
-    }
-</script>
 
+        // --- Logic chung cho SỬA và XÓA review ---
+        const reviewsList = document.getElementById('reviews-list');
+        if (reviewsList) {
+            const editReviewModalEl = document.getElementById('editReviewModal');
+            const editReviewModal = editReviewModalEl ? new bootstrap.Modal(editReviewModalEl) : null;
+            const editReviewForm = document.getElementById('edit-review-form');
+            const editRatingStars = editReviewModalEl?.querySelectorAll('#edit-rating-input i');
+            let editSelectedRating = 0;
+
+            const highlightEditStars = (rating) => {
+                if(editRatingStars) {
+                    editRatingStars.forEach(star => {
+                        star.classList.toggle('fas', parseInt(star.dataset.rating) <= rating);
+                        star.classList.toggle('far', parseInt(star.dataset.rating) > rating);
+                    });
+                }
+            };
+
+            if(editRatingStars) {
+                editRatingStars.forEach(star => {
+                    star.addEventListener('mouseover', () => highlightEditStars(parseInt(star.dataset.rating)));
+                    star.addEventListener('mouseout', () => highlightEditStars(editSelectedRating));
+                    star.addEventListener('click', () => {
+                        editSelectedRating = parseInt(star.dataset.rating);
+                        if(editReviewForm) editReviewForm.querySelector('#edit-rating-value').value = editSelectedRating;
+                    });
+                });
+            }
+
+            // Xử lý click Sửa hoặc Xóa
+            reviewsList.addEventListener('click', function(event) {
+                const editButton = event.target.closest('.edit-review-btn');
+                const deleteButton = event.target.closest('.delete-review-btn');
+
+                if (editButton && editReviewForm && editReviewModal) {
+                    editSelectedRating = parseInt(editButton.dataset.rating);
+
+                    editReviewForm.querySelector('#edit-review-id').value = editButton.dataset.reviewId;
+                    editReviewForm.querySelector('#edit-review-comment').value = editButton.dataset.comment;
+                    editReviewForm.querySelector('#edit-rating-value').value = editSelectedRating;
+                    highlightEditStars(editSelectedRating);
+
+                    editReviewModal.show();
+                }
+
+                if (deleteButton) {
+                    const reviewId = deleteButton.dataset.reviewId;
+                    if (reviewId && confirm('Are you sure you want to delete this review?')) {
+                        deleteReview(reviewId);
+                    }
+                }
+            });
+
+            // Xử lý submit form SỬA
+            if(editReviewForm) {
+                editReviewForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const reviewId = editReviewForm.querySelector('#edit-review-id').value;
+                    const rating = editSelectedRating;
+                    const comment = editReviewForm.querySelector('#edit-review-comment').value.trim();
+
+                    if (!rating) return showToast("Please select a rating.", "error");
+
+                    fetch(`/reviews/update/${reviewId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...csrfHeaders },
+                        body: new URLSearchParams({ rating, comment })
+                    })
+                        .then(res => {
+                            if (!res.ok) return res.json().then(err => { throw new Error(err.message); });
+                            return res.json();
+                        })
+                        .then(updatedReview => {
+                            showToast("Review updated successfully!", "success");
+                            // Cập nhật lại review trên trang mà không cần reload
+                            const reviewCardComment = document.querySelector(`#review-${updatedReview.id} .card-text`);
+                            if (reviewCardComment) reviewCardComment.textContent = updatedReview.comment;
+
+                            const reviewCardStarsContainer = document.querySelector(`#review-${updatedReview.id} .star-rating-display`);
+                            if (reviewCardStarsContainer) {
+                                const stars = reviewCardStarsContainer.querySelectorAll('i');
+                                stars.forEach((star, index) => {
+                                    star.className = (index < updatedReview.rating) ? 'fas fa-star' : 'far fa-star';
+                                });
+                            }
+
+                            if(editReviewModal) editReviewModal.hide();
+                        })
+                        .catch(err => showToast(err.message, "error"));
+                });
+            }
+        }
+    });
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

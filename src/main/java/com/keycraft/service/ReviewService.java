@@ -70,8 +70,8 @@ public class ReviewService {
     }
 
     // THAY ĐỔI LỚN: Thêm tham số User để kiểm tra quyền sở hữu
-    public void deleteReview(Long reviewId, User user) {
-        // RÀNG BUỘC BẢO MẬT: Đảm bảo người dùng chỉ có thể xóa review của chính mình
+    public void deleteReview(Long reviewId, User user) { // <-- THÊM THAM SỐ USER
+
         if (!reviewRepository.findByIdAndUser(reviewId, user).isPresent()) {
             throw new AccessDeniedException("You do not have permission to delete this review.");
         }
