@@ -1,9 +1,13 @@
 package com.keycraft.controller;
 
+import com.keycraft.model.Order.OrderStatus;
 import com.keycraft.model.User;
+import com.keycraft.repository.CartRepository;
+import com.keycraft.repository.OrderRepository;
 import com.keycraft.repository.UserRepository;
 import com.keycraft.service.UserService;
 
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,12 +29,17 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final UserService userService;
+    private final OrderRepository orderRepository;
+    @Autowired
+    private CartRepository cartRepository;
 
     @Autowired
     public UserController(UserRepository userRepository,
-                          UserService userService) {
+                          UserService userService,
+                          OrderRepository orderRepository) {
         this.userRepository = userRepository;
         this.userService = userService;
+        this.orderRepository = orderRepository; // <-- thêm dòng này
     }
 
     private User getAuthenticatedUser() {
@@ -94,32 +103,53 @@ public class UserController {
                     .body(Map.of("message", "Admin access required"));
         }
 
-        Optional<User> updated = userService.updateUser(id, updatedUser);
-        return updated.<ResponseEntity<?>>map(ResponseEntity::ok)
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("message", "User not found")));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
-        User currentUser = getAuthenticatedUser();
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "You need to login"));
-        }
-
-        if (currentUser.getRole() != User.UserRole.ADMIN) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Admin access required"));
-        }
-
-        boolean deleted = userService.deleteUser(id);
-        if (deleted) {
-            return ResponseEntity.noContent().build();
-        } else {
+        // 🔧 Xử lý password tại đây nếu trống thì giữ nguyên
+        Optional<User> existingOpt = userRepository.findById(id);
+        if (existingOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", "User not found"));
         }
+
+        User existing = existingOpt.get();
+        
+        // Nếu password trống thì giữ nguyên
+        if (updatedUser.getPassword() == null || updatedUser.getPassword().isBlank()) {
+            updatedUser.setPassword(existing.getPassword()); // đã được mã hoá
+        } else {
+            updatedUser.setPassword(userService.encodePassword(updatedUser.getPassword()));
+        }
+
+        updatedUser.setId(id); // đảm bảo ID không bị mất
+
+        User saved = userRepository.save(updatedUser);
+        return ResponseEntity.ok(saved);
     }
-    
+
+    @DeleteMapping("/{id}")
+    @Transactional // ✅ THÊM ANNOTATION NÀY
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        Optional<User> optionalUser = userRepository.findById(id);
+        if (optionalUser.isEmpty()) return ResponseEntity.notFound().build();
+
+        User user = optionalUser.get();
+
+        boolean hasNonCancelledOrders = orderRepository
+            .existsByUserIdAndStatusNot(id, OrderStatus.CANCELLED);
+
+        if (hasNonCancelledOrders) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body("Cannot delete user with non-cancelled orders");
+        }
+
+        cartRepository.deleteAllByUserId(id);
+
+        orderRepository.deleteAllByUserIdAndStatus(id, OrderStatus.CANCELLED);
+
+        userRepository.delete(user);
+        return ResponseEntity.ok().build();
+    }
+
+
+
+
 }

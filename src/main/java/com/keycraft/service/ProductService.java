@@ -14,10 +14,14 @@ public class ProductService {
 
     @Autowired
     private ProductRepository productRepository;
+    
+    @Autowired
+    private OrderItemService orderItemService;
 
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
+    
 
     public List<Product> getProductsWithFilters(String category, String brand, String switchType, 
                                                BigDecimal minPrice, BigDecimal maxPrice, String search) {
@@ -40,30 +44,45 @@ public class ProductService {
         return productRepository.save(product);
     }
 
-    public Optional<Product> updateProduct(Long id, Product updatedProduct) {
-        Optional<Product> existing = productRepository.findById(id);
-        if (existing.isEmpty()) return Optional.empty();
-
-        Product product = existing.get();
-                    product.setName(updatedProduct.getName());
-                    product.setDescription(updatedProduct.getDescription());
-                    product.setPrice(updatedProduct.getPrice());
-                    product.setImageUrl(updatedProduct.getImageUrl());
-                    product.setCategory(updatedProduct.getCategory());
-                    product.setBrand(updatedProduct.getBrand());
-                    product.setSwitchType(updatedProduct.getSwitchType());
-                    product.setLayout(updatedProduct.getLayout());
-                    product.setStock(updatedProduct.getStock());
-                    product.setFeatured(updatedProduct.getFeatured());
-                    return Optional.of(productRepository.save(product));
-
+    public Optional<Product> updateProduct(Long id, Product updated) {
+        return productRepository.findById(id).map(p -> {
+            p.setName(updated.getName());
+            p.setDescription(updated.getDescription());
+            p.setPrice(updated.getPrice());
+            p.setImageUrl(updated.getImageUrl());
+            p.setCategory(updated.getCategory());
+            p.setBrand(updated.getBrand());
+            p.setSwitchType(updated.getSwitchType());
+            p.setLayout(updated.getLayout());
+            p.setStock(updated.getStock());
+            p.setFeatured(updated.getFeatured());
+            p.setDiscontinued(updated.isDiscontinued());
+            return productRepository.save(p);
+        });
     }
 
     public boolean deleteProduct(Long id) {
-        Optional<Product> existing = productRepository.findById(id);
-        if (existing.isEmpty()) return false;
+        return productRepository.findById(id).map(p -> {
+            if (orderItemService.existsInActiveOrders(id)) {
+                return false; // còn đơn hàng chưa huỷ -> không xoá
+            }
+            p.setDiscontinued(true);
+            productRepository.save(p);
+            return true;
+        }).orElse(false);
+    }
+    public boolean discontinueProduct(Long id) {
+        Product product = productRepository.findById(id).orElse(null);
+        if (product == null) return false;
 
-        productRepository.deleteById(id);
+        // Kiểm tra xem sản phẩm có đang nằm trong order chưa huỷ không
+        boolean usedInActiveOrders = orderItemService.existsInActiveOrders(id);
+        if (usedInActiveOrders) return false;
+
+        product.setDiscontinued(true);
+        productRepository.save(product);
         return true;
     }
+    
+    
 }

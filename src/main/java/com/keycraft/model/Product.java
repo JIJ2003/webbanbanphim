@@ -49,6 +49,10 @@ public class Product {
     
     private LocalDateTime updatedAt;
     
+    @Column(nullable = false)
+    private boolean discontinued = false;
+
+    
     // Default constructor
     public Product() {
         this.createdAt = LocalDateTime.now();
@@ -164,4 +168,13 @@ public class Product {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+	public boolean isDiscontinued() {
+		return discontinued;
+	}
+
+	public void setDiscontinued(boolean discontinued) {
+		this.discontinued = discontinued;
+	}
+    
 }

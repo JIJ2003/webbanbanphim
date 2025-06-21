@@ -1,6 +1,7 @@
 package com.keycraft.repository;
 
 import com.keycraft.model.Order;
+import com.keycraft.model.Order.OrderStatus;
 import com.keycraft.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -19,7 +20,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
     
     List<Order> findByStatus(Order.OrderStatus status);
+
     
     @Query("SELECT DISTINCT o FROM Order o JOIN o.orderItems oi WHERE oi.product.id = :productId AND o.user.id = :userId AND o.status = 'DELIVERED'")
     List<Order> findDeliveredOrdersByUserAndProduct(@Param("userId") Long userId, @Param("productId") Long productId);
+
+	boolean existsByUserIdAndStatusNot(Long id, OrderStatus cancelled);
+
+	void deleteAllByUserIdAndStatus(Long id, OrderStatus cancelled);
+
 }

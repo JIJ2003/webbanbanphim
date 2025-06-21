@@ -1,6 +1,8 @@
 package com.keycraft.service;
 
+import com.keycraft.model.Order;
 import com.keycraft.model.User;
+import com.keycraft.repository.OrderRepository;
 import com.keycraft.repository.UserRepository;
 
 import jakarta.validation.Valid;
@@ -19,6 +21,13 @@ public class UserService {
     private UserRepository userRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private OrderRepository orderRepository;
+
+    
+    public String encodePassword(String rawPassword) {
+        return passwordEncoder.encode(rawPassword);
+    }
 
     public List<User> findAll() {
         return userRepository.findAll();
@@ -34,9 +43,21 @@ public class UserService {
         });
     }
 
-    public boolean deleteUser(Long id) {
-        if (!userRepository.existsById(id)) return false;
-        userRepository.deleteById(id);
+    public boolean deleteUser(Long userId) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) return false;
+
+        List<Order> orders = orderRepository.findByUserId(userId);
+
+        // Nếu có bất kỳ đơn hàng nào không phải CANCELLED → không xóa
+        boolean allCancelled = orders.stream()
+            .allMatch(o -> o.getStatus() == Order.OrderStatus.CANCELLED);
+
+        if (!allCancelled) {
+            throw new IllegalStateException("User has non-cancelled orders");
+        }
+
+        userRepository.deleteById(userId);
         return true;
     }
 

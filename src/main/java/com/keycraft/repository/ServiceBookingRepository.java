@@ -9,12 +9,6 @@ import java.util.List;
 
 @Repository
 public interface ServiceBookingRepository extends JpaRepository<ServiceBooking, Long> {
-    
-    List<ServiceBooking> findByUser(User user);
-    
-    List<ServiceBooking> findByStatus(String status);
-    
-    List<ServiceBooking> findByServiceType(ServiceBooking.ServiceType serviceType);
-    
-    List<ServiceBooking> findByOrderByCreatedAtDesc();
+   
+    List<ServiceBooking> findAllByOrderByCreatedAtDesc();
 }

@@ -3,11 +3,13 @@ com\keycraft\service\UserService.class
 com\keycraft\repository\OrderItemRepository.class
 com\keycraft\repository\ServiceBookingRepository.class
 com\keycraft\service\NotificationService.class
+com\keycraft\controller\OrderRestController.class
 com\keycraft\repository\UserRepository.class
 com\keycraft\repository\NotificationRepository.class
 com\keycraft\config\DataInitializer.class
 com\keycraft\model\User$UserRole.class
 com\keycraft\repository\OrderRepository.class
+com\keycraft\service\OrderItemService.class
 com\keycraft\controller\CheckoutController.class
 com\keycraft\service\ReviewService$ReviewStats.class
 com\keycraft\repository\ReviewRepository.class
@@ -21,7 +23,6 @@ com\keycraft\service\ProductService.class
 com\keycraft\service\NotificationService$1.class
 com\keycraft\controller\CartController.class
 com\keycraft\service\OrderService.class
-com\keycraft\config\WebConfig.class
 com\keycraft\model\CartItem.class
 com\keycraft\model\Cart.class
 org\springframework\session\web\http\HttpSessionIdResolver.class
@@ -29,6 +30,7 @@ com\keycraft\repository\CartItemRepository.class
 com\keycraft\config\AdminAuthFilter.class
 com\keycraft\controller\ServiceBookingController.class
 com\keycraft\KeycraftEcommerceApplication.class
+com\keycraft\controller\OrderRestController$1.class
 com\keycraft\service\CustomUserDetailsService.class
 com\keycraft\model\Review.class
 com\keycraft\controller\OrderController.class
@@ -39,10 +41,10 @@ com\keycraft\model\Notification$NotificationType.class
 com\keycraft\service\ServiceBookingService.class
 com\keycraft\service\NotificationService$NotificationType.class
 com\keycraft\controller\ReviewController.class
-com\keycraft\controller\ServiceBookingController$StatusUpdateRequest.class
 org\springframework\session\web\http\CookieHttpSessionIdResolver.class
 com\keycraft\model\User.class
 com\keycraft\model\Product.class
+com\keycraft\model\ServiceBooking$ServiceStatus.class
 com\keycraft\controller\AuthController.class
 com\keycraft\model\ServiceBooking$ServiceType.class
 com\keycraft\service\ReviewService.class
