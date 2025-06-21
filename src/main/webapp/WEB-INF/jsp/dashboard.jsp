@@ -287,11 +287,11 @@
       </table>
     </div>
 
-   <!-- Services -->
+<!-- Services --> 
 <div class="tab-pane fade" id="services">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h4><i class="fas fa-tools"></i> Service Bookings</h4>
-    <button id="addServiceModal" class="btn btn-primary">
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addServiceModal">
       <i class="fas fa-plus"></i> Add Booking
     </button>
   </div>
@@ -300,7 +300,8 @@
       <thead>
         <tr>
           <th>ID</th>
-          <th>User ID</th>
+          <th>Customer Email</th>
+          <th>Customer Phone</th>
           <th>Service Type</th>
           <th>Description</th>
           <th>Status</th>
@@ -313,7 +314,8 @@
         <c:forEach items="${services}" var="s">
           <tr>
             <td>${s.id}</td>
-            <td>${s.userId}</td>
+            <td>${s.customerEmail}</td>
+            <td>${s.customerPhone}</td>
             <td>${s.serviceType}</td>
             <td>${s.description}</td>
             <td>${s.status}</td>
@@ -333,6 +335,7 @@
     </table>
   </div>
 </div>
+
 
 
 <!-- Add Product Modal -->
@@ -559,26 +562,28 @@
     </div>
   </div>
 </div>
-<!-- Add/Edit Service Modal -->
-<div class="modal fade" id="serviceModal" tabindex="-1">
+<!-- Add Service Modal -->
+<div class="modal fade" id="addServiceModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form id="serviceForm">
+      <form id="addServiceForm">
         <div class="modal-header">
-          <h5 class="modal-title" id="serviceModalTitle">Add Booking</h5>
+          <h5 class="modal-title">Add New Service</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <input type="hidden" id="serviceId">
-
           <div class="mb-3">
-            <label class="form-label">User ID</label>
-            <input type="number" class="form-control" id="serviceUserId" required>
+            <label class="form-label">Customer Email</label>
+            <input type="email" class="form-control" id="addServiceEmail" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Customer Phone</label>
+            <input type="text" class="form-control" id="addServicePhone" required>
           </div>
           <div class="mb-3">
             <label class="form-label">Service Type</label>
-            <select class="form-select" id="serviceType" required>
-              <option value="">-- chọn --</option>
+            <select class="form-select" id="addServiceType" required>
+              <option value="">-- choose --</option>
               <option value="CUSTOM_BUILD">Custom Build</option>
               <option value="CLEANING">Cleaning</option>
               <option value="REPAIR">Repair</option>
@@ -586,32 +591,89 @@
           </div>
           <div class="mb-3">
             <label class="form-label">Description</label>
-            <textarea class="form-control" id="serviceDescription" rows="3"></textarea>
+            <textarea class="form-control" id="addServiceDescription"></textarea>
           </div>
           <div class="mb-3">
             <label class="form-label">Status</label>
-            <select class="form-select" id="serviceStatus" required>
-              <option value="">-- chọn --</option>
-              <option value="RECEIVED">Received</option>
+            <select class="form-select" id="addServiceStatus" required>
+              <option value="PENDING">Pending</option>
               <option value="IN_PROGRESS">In Progress</option>
+              <option value="CONFIRMED">Confirmed</option>
               <option value="COMPLETED">Completed</option>
-              <option value="RETURNED">Returned</option>
               <option value="CANCELLED">Cancelled</option>
             </select>
           </div>
           <div class="mb-3">
-            <label class="form-label">Estimated Price ($)</label>
-            <input type="number" step="0.01" class="form-control" id="servicePrice">
+            <label class="form-label">Estimated Price</label>
+            <input type="number" step="0.01" class="form-control" id="addServicePrice">
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-          <button type="submit" class="btn btn-primary">Lưu</button>
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Service</button>
         </div>
       </form>
     </div>
   </div>
 </div>
+
+<!-- Edit Service Modal -->
+<div class="modal fade" id="editServiceModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="editServiceForm">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Service</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editServiceId">
+          <div class="mb-3">
+            <label class="form-label">Customer Email</label>
+            <input type="email" class="form-control" id="editServiceEmail" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Customer Phone</label>
+            <input type="text" class="form-control" id="editServicePhone" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Service Type</label>
+            <select class="form-select" id="editServiceType" required>
+              <option value="">-- choose --</option>
+              <option value="CUSTOM_BUILD">Custom Build</option>
+              <option value="CLEANING">Cleaning</option>
+              <option value="REPAIR">Repair</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" id="editServiceDescription"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="editServiceStatus" required>
+              <option value="PENDING">Pending</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="CONFIRMED">Confirmed</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="CANCELLED">Cancelled</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Estimated Price</label>
+            <input type="number" step="0.01" class="form-control" id="editServicePrice">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
 
 
 <script src="/webjars/jquery/jquery.min.js"></script>
@@ -898,70 +960,107 @@ function filterProducts() {
 	    row.toggle(visible);
 	  });
 	}
-//1) Mở modal Sửa
-window.editService = function(id) {
-  $.getJSON('/api/services/' + id, function(s) {
-    // Nếu JSON trả về user lồng trong object, dùng s.user.id
-    // nếu chỉ có userId, dùng s.userId
-    $('#serviceId').val(s.id);
-    $('#serviceUserId').val(s.user?.id || s.userId);
-    $('#serviceType').val(s.serviceType);
-    $('#serviceDescription').val(s.description);
-    $('#serviceStatus').val(s.status);
-    $('#servicePrice').val(s.estimatedPrice);
-    new bootstrap.Modal($('#serviceModal')[0]).show();
-  })
-  .fail(function() {
-    alert('Không tìm thấy đặt dịch vụ #' + id);
-  });
-};
+	  // Add new service
+	  $('#addServiceForm').submit(function (e) {
+	    e.preventDefault();
+	    const data = {
+	      user: { id: parseInt($('#addServiceUserId').val(),10) },
+	      serviceType:    $('#addServiceType').val(),
+	      description:    $('#addServiceDescription').val(),
+	      status:         $('#addServiceStatus').val(),
+	      estimatedPrice: parseFloat($('#addServicePrice').val())||0
+	    };
+	    $.ajax({
+	      url: '/api/services',
+	      type: 'POST',
+	      contentType: 'application/json',
+	      data: JSON.stringify(data),
+	      success: () => {
+	        $('#addServiceModal').modal('hide');
+	        location.reload();
+	      },
+	      error: xhr => alert('Failed to add service: '+xhr.responseText)
+	    });
+	  });
 
-// 2) Submit form Thêm / Sửa
-$('#serviceForm').submit(function(e) {
-  e.preventDefault();
-  const id = $('#serviceId').val();
-  const url = id ? '/api/services/' + id : '/api/services';
-  const type = id ? 'PUT' : 'POST';
 
-  // Chuẩn bị data giống như model ServiceBooking
-  const data = {
-    // backend sẽ lấy id từ URL path; không cần truyền id trong body
-    user: { id: parseInt($('#serviceUserId').val(), 10) },
-    serviceType: $('#serviceType').val(),
-    description: $('#serviceDescription').val(),
-    status: $('#serviceStatus').val(),
-    estimatedPrice: parseFloat($('#servicePrice').val()) || 0
-  };
 
-  $.ajax({
-    url: url,
-    type: type,
-    contentType: 'application/json',
-    data: JSON.stringify(data),
-    success: function() {
-      location.reload();
-    },
-    error: function(xhr) {
-      alert('Lỗi khi lưu đặt dịch vụ: ' + xhr.responseText);
-    }
-  });
-});
+	  $(function(){
 
-// 3) Xóa
-window.deleteService = function(id) {
-  if (confirm('Xóa đặt dịch vụ #' + id + '?')) {
-    $.ajax({
-      url: '/api/services/' + id,
-      type: 'DELETE',
-      success: function() {
-        location.reload();
-      },
-      error: function(xhr) {
-        alert('Lỗi khi xóa đặt dịch vụ #' + id + ': ' + xhr.responseText);
-      }
-    });
-  }
-};
+		  // 1) Thêm service
+		  $('#addServiceForm').submit(function(e){
+		    e.preventDefault();
+		    const data = {
+		      customerEmail: $('#addServiceEmail').val(),
+		      customerPhone: $('#addServicePhone').val(),
+		      serviceType:   $('#addServiceType').val(),
+		      description:   $('#addServiceDescription').val(),
+		      status:        $('#addServiceStatus').val(),
+		      estimatedPrice: parseFloat($('#addServicePrice').val())||0
+		    };
+		    $.ajax({
+		      url: '/api/services',
+		      type: 'POST',
+		      contentType: 'application/json',
+		      data: JSON.stringify(data),
+		      success: ()=>{
+		        $('#addServiceModal').modal('hide');
+		        location.reload();
+		      },
+		      error: xhr=> alert('Failed to add service: '+xhr.responseText)
+		    });
+		  });
+
+		  // 2) Mở modal sửa và bind dữ liệu
+		  window.editService = function(id){
+		    $.getJSON('/api/services/'+id, s=>{
+		      $('#editServiceId').val(s.id);
+		      $('#editServiceEmail').val(s.customerEmail);
+		      $('#editServicePhone').val(s.customerPhone);
+		      $('#editServiceType').val(s.serviceType);
+		      $('#editServiceDescription').val(s.description);
+		      $('#editServiceStatus').val(s.status);
+		      $('#editServicePrice').val(s.estimatedPrice);
+		      new bootstrap.Modal($('#editServiceModal')[0]).show();
+		    }).fail(()=> alert('Service #'+id+' not found.'));
+		  };
+
+		  // 3) Lưu chỉnh sửa
+		  $('#editServiceForm').submit(function(e){
+		    e.preventDefault();
+		    const id = $('#editServiceId').val();
+		    const data = {
+		      customerEmail: $('#editServiceEmail').val(),
+		      customerPhone: $('#editServicePhone').val(),
+		      serviceType:   $('#editServiceType').val(),
+		      description:   $('#editServiceDescription').val(),
+		      status:        $('#editServiceStatus').val(),
+		      estimatedPrice: parseFloat($('#editServicePrice').val())||0
+		    };
+		    $.ajax({
+		      url: '/api/services/'+id,
+		      type: 'PUT',
+		      contentType: 'application/json',
+		      data: JSON.stringify(data),
+		      success: ()=> location.reload(),
+		      error: xhr=> alert('Failed to update service: '+xhr.responseText)
+		    });
+		  });
+
+		  // 4) Xóa
+		  window.deleteService = function(id){
+		    if(!confirm('Delete service #'+id+'?')) return;
+		    $.ajax({
+		      url: '/api/services/'+id,
+		      type: 'DELETE',
+		      success: ()=> location.reload(),
+		      error: xhr=> alert('Failed to delete service #'+id+': '+xhr.responseText)
+		    });
+		  };
+
+		});
+
+
 
 </script>
 </body>

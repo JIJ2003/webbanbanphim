@@ -14,5 +14,7 @@ public class OrderItemService {
     public boolean existsInActiveOrders(Long productId) {
         return orderItemRepository.existsByProductIdAndOrderStatusNot(productId, OrderStatus.CANCELLED);
     }
+    
+    
 }
 

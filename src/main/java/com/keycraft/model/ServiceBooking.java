@@ -1,6 +1,7 @@
 package com.keycraft.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -14,16 +15,19 @@ public class ServiceBooking {
     }
 
     public enum ServiceStatus {
-        RECEIVED, IN_PROGRESS, COMPLETED, RETURNED, CANCELLED
+        PENDING, IN_PROGRESS, CONFIRMED, COMPLETED, CANCELLED
     }
-
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // chỉ giữ userId cho đơn giản
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @Email
+    @Column(name = "customer_email")
+    private String customerEmail;
+
+    @Column(name = "customer_phone")
+    private String customerPhone;
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -34,7 +38,7 @@ public class ServiceBooking {
 
     @NotNull
     @Enumerated(EnumType.STRING)
-    private ServiceStatus status = ServiceStatus.RECEIVED;
+    private ServiceStatus status = ServiceStatus.PENDING;
 
     @Column(name = "estimated_price", precision = 10, scale = 2)
     private BigDecimal estimatedPrice;
@@ -77,13 +81,24 @@ public class ServiceBooking {
     
 
     
-    public Long getUserId() {
-		return userId;
+
+	public String getCustomerEmail() {
+		return customerEmail;
 	}
 
 
-	public void setUserId(Long userId) {
-		this.userId = userId;
+	public void setCustomerEmail(String customerEmail) {
+		this.customerEmail = customerEmail;
+	}
+
+
+	public String getCustomerPhone() {
+		return customerPhone;
+	}
+
+
+	public void setCustomerPhone(String customerPhone) {
+		this.customerPhone = customerPhone;
 	}
 
 

@@ -30,45 +30,53 @@ public class OrderService {
     
     @Autowired
     private OrderItemRepository orderItemRepository;
+    @Autowired private ProductService productService;
+
 
 
     public Order createOrderFromCart(User user, String fullAddress, String paymentMethod) {
         List<CartItem> cartItems = cartService.getCartItems(user);
-
         if (cartItems.isEmpty()) {
             throw new IllegalStateException("Cart is empty");
         }
 
-        // Calculate total amount
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        for (CartItem cartItem : cartItems) {
-            totalAmount = totalAmount.add(cartItem.getSubtotal());
-        }
+        // 1) Tính tổng tiền
+        BigDecimal totalAmount = cartItems.stream()
+                                          .map(CartItem::getSubtotal)
+                                          .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Create order
+        // 2) Tạo Order chính
         Order order = new Order(user, totalAmount);
         order.setBillingAddress(fullAddress);
-        order.setShippingAddress(fullAddress); // Có thể sửa lại nếu có billing/shipping riêng biệt
+        order.setShippingAddress(fullAddress);
         order.setPaymentMethod(paymentMethod);
-
         order = orderRepository.save(order);
 
-        // Create order items
-        List<OrderItem> orderItems = new ArrayList<>();
-        for (CartItem cartItem : cartItems) {
-            OrderItem orderItem = new OrderItem(
-                order,
-                cartItem.getProduct(),
-                cartItem.getQuantity(),
-                cartItem.getProduct().getPrice()
-            );
-            orderItems.add(orderItem);
-        }
-        order.setOrderItems(orderItems);
+        // 3) Với mỗi CartItem:
+        //    - Giảm stock
+        //    - Tạo OrderItem và thêm vào order.getOrderItems()
+        for (CartItem ci : cartItems) {
+            Product prod = ci.getProduct();
+            int qty = ci.getQuantity();
 
-        // Clear cart
+            // Giảm stock
+            int remaining = prod.getStock() - qty;
+            if (remaining < 0) {
+                throw new IllegalStateException(
+                    "Not enough stock for product: " + prod.getName());
+            }
+            prod.setStock(remaining);
+            productService.saveProduct(prod);
+
+            // Tạo OrderItem
+            OrderItem oi = new OrderItem(order, prod, qty, prod.getPrice());
+            order.getOrderItems().add(oi);
+        }
+
+        // 4) Clear cart
         cartService.clearCart(user);
 
+        // 5) Lưu lại order (cascade cả orderItems)
         return orderRepository.save(order);
     }
     
