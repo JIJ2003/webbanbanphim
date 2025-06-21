@@ -3,13 +3,11 @@ package com.keycraft.controller;
 import com.keycraft.model.ServiceBooking;
 import com.keycraft.service.ServiceBookingService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/services")
@@ -17,59 +15,41 @@ import java.util.Optional;
 public class ServiceBookingController {
 
     @Autowired
-    private ServiceBookingService serviceBookingService;
+    private ServiceBookingService svc;
 
     @GetMapping
-    public ResponseEntity<List<ServiceBooking>> getAllServiceBookings() {
-        List<ServiceBooking> bookings = serviceBookingService.getAllServiceBookings();
-        return ResponseEntity.ok(bookings);
+    public List<ServiceBooking> all() {
+        return svc.findAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ServiceBooking> getServiceBookingById(@PathVariable Long id) {
-        Optional<ServiceBooking> booking = serviceBookingService.getServiceBookingById(id);
-        return booking.map(ResponseEntity::ok)
-                     .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ServiceBooking> one(@PathVariable Long id) {
+        return svc.findById(id)
+                  .map(ResponseEntity::ok)
+                  .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<ServiceBooking> createServiceBooking(@Valid @RequestBody ServiceBooking serviceBooking) {
-        ServiceBooking savedBooking = serviceBookingService.saveServiceBooking(serviceBooking);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedBooking);
+    public ResponseEntity<ServiceBooking> create(@Valid @RequestBody ServiceBooking booking) {
+        ServiceBooking saved = svc.save(booking);
+        return ResponseEntity.status(201).body(saved);
     }
 
-    @PutMapping("/{id}/status")
-    public ResponseEntity<ServiceBooking> updateServiceBookingStatus(
-            @PathVariable Long id, 
-            @RequestBody StatusUpdateRequest request) {
-        try {
-            ServiceBooking updatedBooking = serviceBookingService.updateStatus(id, request.getStatus());
-            return ResponseEntity.ok(updatedBooking);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+    @PutMapping("/{id}")
+    public ResponseEntity<ServiceBooking> update(
+        @PathVariable Long id,
+        @Valid @RequestBody ServiceBooking booking
+    ) {
+        return svc.findById(id).map(existing -> {
+            booking.setId(id);
+            ServiceBooking updated = svc.save(booking);
+            return ResponseEntity.ok(updated);
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteServiceBooking(@PathVariable Long id) {
-        try {
-            serviceBookingService.deleteServiceBooking(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    // Inner class for status update requests
-    public static class StatusUpdateRequest {
-        private String status;
-
-        public String getStatus() {
-            return status;
-        }
-
-        public void setStatus(String status) {
-            this.status = status;
-        }
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        svc.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -9,6 +9,8 @@ import com.keycraft.service.CartService;
 import com.keycraft.service.CustomUserDetailsService;
 import com.keycraft.service.OrderService;
 import com.keycraft.service.ProductService;
+import com.keycraft.service.ServiceBookingService;
+
 import jakarta.servlet.http.HttpSession;
 
 import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
@@ -32,6 +34,8 @@ public class HomeController {
     private CartService cartService;
     @Autowired
     private OrderService orderService;
+    @Autowired
+    private ServiceBookingService serviceBookingService;
 
     @GetMapping("/")
     public String homeRedirect() {
@@ -109,6 +113,8 @@ public class HomeController {
         model.addAttribute("users", userRepository.findAll());
         model.addAttribute("orders", orderService.getAllOrders());
         model.addAttribute("orderStatuses", Order.OrderStatus.values());
+         model.addAttribute("services", serviceBookingService.findAll());
+
 
 
         // TODO: add orderService.getAllOrders() if you have

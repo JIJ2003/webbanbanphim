@@ -1,5 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+
 <%@ page import="com.keycraft.model.Order.OrderStatus" %>
 
 <!DOCTYPE html>
@@ -95,50 +97,101 @@
       </div>
       <div class="table-responsive">
         <table class="table table-striped">
+
+<!-- Product Filters -->
+<div class="row mb-3">
+  <div class="col-md-3">
+    <input id="filterName" type="text" class="form-control" placeholder="Search name...">
+  </div>
+  <div class="col-md-3">
+    <select id="filterCategory" class="form-select">
+      <option value="">All Categories</option>
+      <option value="mechanical-keyboards">Mechanical Keyboards</option>
+      <option value="switches">Switches</option>
+      <option value="keycaps">Keycaps</option>
+      <option value="accessories">Accessories</option>
+    </select>
+  </div>
+  <div class="col-md-3">
+    <input id="filterBrand" type="text" class="form-control" placeholder="Brand...">
+  </div>
+  <div class="col-md-3 d-flex gap-2">
+    <input id="filterMinPrice" type="number" class="form-control" placeholder="Min $">
+    <input id="filterMaxPrice" type="number" class="form-control" placeholder="Max $">
+  </div>
+</div>
+<div class="row mb-3">
+  <div class="col-md-3">
+    <select id="filterStockStatus" class="form-select">
+      <option value="">All Stock Status</option>
+      <option value="out">Out of Stock</option>
+      <option value="discontinued">Discontinued</option>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-secondary w-100" onclick="filterProducts()">Filter</button>
+  </div>
+</div>
+
+        
           <thead>
-            <tr>
-              <th>Image</th><th>Name</th><th>Brand</th><th>Price</th><th>Stock</th><th>Featured</th><th>Actions</th>
-            </tr>
+<tr>
+<th>Image</th><th>Name</th><th>Brand</th><th>Price</th>
+    <th>Stock</th><th>Category</th><th>Status</th><th>Featured</th><th>Actions</th>            </tr>
           </thead>
           <tbody>
             <c:forEach items="${products}" var="p">
-              <tr>
+  <tr class="${p.discontinued ? 'discontinued' : ''}">
                 <td><img src="${p.imageUrl}" alt="${p.name}" style="width:50px;height:50px;object-fit:cover;" class="rounded"></td>
-                <td>${p.name}</td>
-                <td>${p.brand}</td>
-                <td>$${p.price}</td>
-                <td>
-<c:choose>
-  <c:when test="${p.stock > 10}">
-    <span class="badge bg-success">${p.stock}</span>
-  </c:when>
-  <c:when test="${p.stock > 0}">
-    <span class="badge bg-warning">${p.stock}</span>
-  </c:when>
-  <c:otherwise>
-    <span class="badge bg-danger">${p.stock}</span>
-  </c:otherwise>
-</c:choose>
+<td>${p.name}</td>
+<td>${p.brand}</td>
+<td>$${p.price}</td>
+<td>
+  <c:choose>
+    <c:when test="${p.stock > 10}">
+      <span class="badge bg-success">${p.stock}</span>
+    </c:when>
+    <c:when test="${p.stock > 0}">
+      <span class="badge bg-warning">${p.stock}</span>
+    </c:when>
+    <c:otherwise>
+      <span class="badge bg-danger">0</span>
+    </c:otherwise>
+  </c:choose>
+</td>
+<td>${p.category}</td>
+<td>
+  <c:choose>
+    <c:when test="${p.discontinued}">
+      <span class="badge bg-dark">Discontinued</span>
+    </c:when>
+    <c:when test="${p.stock == 0}">
+      <span class="badge bg-danger">Out of Stock</span>
+    </c:when>
+    <c:otherwise>
+      <span class="badge bg-success">Available</span>
+    </c:otherwise>
+  </c:choose>
+</td>
+<td>
+  <c:choose>
+    <c:when test="${p.featured}">
+      <span class="badge bg-primary">Featured</span>
+    </c:when>
+    <c:otherwise>
+      <span class="badge bg-secondary">Regular</span>
+    </c:otherwise>
+  </c:choose>
+</td>
+<td>
+  <button class="btn btn-sm btn-outline-primary" onclick="editProduct(${p.id})">
+    <i class="fas fa-edit"></i>
+  </button>
+  <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${p.id})">
+    <i class="fas fa-trash"></i>
+  </button>
+</td>
 
-                </td>
-                <td>
-                  <c:choose>
-                    <c:when test="${p.featured}">
-                      <span class="badge bg-primary">Featured</span>
-                    </c:when>
-                    <c:otherwise>
-                      <span class="badge bg-secondary">Regular</span>
-                    </c:otherwise>
-                  </c:choose>
-                </td>
-                <td>
-                  <button class="btn btn-sm btn-outline-primary" onclick="editProduct(${p.id})">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${p.id})">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </td>
               </tr>
             </c:forEach>
           </tbody>
@@ -150,7 +203,24 @@
     
     <!-- Orders Tab Content -->
     <div class="tab-pane fade" id="orders">
-      <table class="table table-striped">
+          <h4><i class="fas fa-receipt"></i> Order Management</h4>
+    
+          <!-- Filters -->
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <input id="searchName" type="text" class="form-control" placeholder="Search product name">
+        </div>
+        <div class="col-md-3">
+          <input id="minTotal"  type="number" class="form-control" placeholder="Min total">
+        </div>
+        <div class="col-md-3">
+          <input id="maxTotal"  type="number" class="form-control" placeholder="Max total">
+        </div>
+        <div class="col-md-2">
+<button id="btnFilter" class="btn btn-secondary w-100">Filter</button>
+        </div>
+      </div>
+<table class="table table-striped" id="ordersTable">
         <thead>
           <tr>
             <th>ID</th>
@@ -163,62 +233,110 @@
           </tr>
         </thead>
         <tbody>
-          <c:forEach items="${orders}" var="o">
-            <tr>
-              <td>#${o.id}</td>
-              <td>${o.user.firstName} ${o.user.lastName}</td>
-              <td>${o.createdAt}</td>
-              <td>
-                <select class="form-select form-select-sm order-status" data-id="${o.id}">
-  <c:forEach var="s" items="${['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED']}">
-    <c:choose>
-      <c:when test="${o.status.name() == s}">
-        <option value="${s}" selected>${s}</option>
-      </c:when>
-      <c:otherwise>
-        <option value="${s}">${s}</option>
-      </c:otherwise>
-    </c:choose>
-  </c:forEach>
-</select>
+  <c:forEach items="${orders}" var="o">
+    <c:set var="productNames" value="" />
+    <c:forEach items="${o.orderItems}" var="item">
+      <c:set var="productNames" value="${productNames}${item.product.name}, " />
+    </c:forEach>
 
-              </td>
-              <td>$${o.totalAmount}</td>
-              <td>
-                <c:choose>
-                  <c:when test="${o.status != 'SHIPPED'}">
-                    <input type="text" class="form-control form-control-sm tracking-input" 
-                           data-id="${o.id}" value="${o.trackingCode}" 
-                           placeholder="Tracking code" disabled/>
-                  </c:when>
-                  <c:otherwise>
-                    <input type="text" class="form-control form-control-sm tracking-input" 
-                           data-id="${o.id}" value="${o.trackingCode}" 
-                           placeholder="Tracking code"/>
-                  </c:otherwise>
-                </c:choose>
-              </td>
-              <td>
-                <button class="btn btn-sm btn-success save-order" data-id="${o.id}">
-                  <i class="fas fa-save"></i> Save
-                </button>
-                <a href="/orders/${o.id}" class="btn btn-sm btn-outline-secondary">
-                  <i class="fas fa-eye"></i>
-                </a>
-              </td>
-            </tr>
+    <tr data-products="${fn:toLowerCase(productNames)}">
+      <td>#${o.id}</td>
+      <td>${o.user.firstName} ${o.user.lastName}</td>
+      <td>${o.createdAt}</td>
+      <td>
+        <select class="form-select form-select-sm order-status" data-id="${o.id}">
+          <c:forEach var="s" items="${['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED']}">
+            <c:choose>
+              <c:when test="${o.status.name() == s}">
+                <option value="${s}" selected>${s}</option>
+              </c:when>
+              <c:otherwise>
+                <option value="${s}">${s}</option>
+              </c:otherwise>
+            </c:choose>
           </c:forEach>
-        </tbody>
+        </select>
+      </td>
+      <td class="order-total">$${o.totalAmount}</td>
+      <td>
+        <c:choose>
+          <c:when test="${o.status != 'SHIPPED'}">
+            <input type="text" class="form-control form-control-sm tracking-input" 
+                   data-id="${o.id}" value="${o.trackingCode}" 
+                   placeholder="Tracking code" disabled/>
+          </c:when>
+          <c:otherwise>
+            <input type="text" class="form-control form-control-sm tracking-input" 
+                   data-id="${o.id}" value="${o.trackingCode}" 
+                   placeholder="Tracking code"/>
+          </c:otherwise>
+        </c:choose>
+      </td>
+      <td>
+        <button class="btn btn-sm btn-success save-order" data-id="${o.id}">
+          <i class="fas fa-save"></i> Save
+        </button>
+        <a href="/orders/${o.id}" class="btn btn-sm btn-outline-secondary">
+          <i class="fas fa-eye"></i>
+        </a>
+      </td>
+    </tr>
+  </c:forEach>
+</tbody>
+
       </table>
     </div>
 
-    <!-- Services -->
-    <div class="tab-pane fade" id="services">
-      <h4><i class="fas fa-tools"></i> Service Bookings</h4>
-      <div class="alert alert-info">Coming soon: Service booking management</div>
-    </div>
+<!-- Services --> 
+<div class="tab-pane fade" id="services">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="fas fa-tools"></i> Service Bookings</h4>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addServiceModal">
+      <i class="fas fa-plus"></i> Add Booking
+    </button>
+  </div>
+  <div class="table-responsive">
+    <table id="servicesTable" class="table table-striped">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Customer Email</th>
+          <th>Customer Phone</th>
+          <th>Service Type</th>
+          <th>Description</th>
+          <th>Status</th>
+          <th>Estimated Price</th>
+          <th>Created At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <c:forEach items="${services}" var="s">
+          <tr>
+            <td>${s.id}</td>
+            <td>${s.customerEmail}</td>
+            <td>${s.customerPhone}</td>
+            <td>${s.serviceType}</td>
+            <td>${s.description}</td>
+            <td>${s.status}</td>
+            <td>${s.estimatedPrice}</td>
+            <td>${s.createdAt}</td>
+            <td>
+              <button onclick="editService(${s.id})" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button onclick="deleteService(${s.id})" class="btn btn-sm btn-outline-danger">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </c:forEach>
+      </tbody>
+    </table>
   </div>
 </div>
+
+
 
 <!-- Add Product Modal -->
 <div class="modal fade" id="addProductModal" tabindex="-1">
@@ -274,6 +392,10 @@
             <input class="form-check-input" type="checkbox" id="featured">
             <label class="form-check-label">Featured</label>
           </div>
+                  <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="addDiscontinued">
+          <label class="form-check-label">Discontinued</label>
+        </div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -339,6 +461,11 @@
             <input class="form-check-input" type="checkbox" id="editFeatured">
             <label class="form-check-label">Featured</label>
           </div>
+                  <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="editDiscontinued">
+          <label class="form-check-label">Discontinued</label>
+        </div>
+          
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -435,12 +562,177 @@
     </div>
   </div>
 </div>
+<!-- Add Service Modal -->
+<div class="modal fade" id="addServiceModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="addServiceForm">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New Service</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Customer Email</label>
+            <input type="email" class="form-control" id="addServiceEmail" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Customer Phone</label>
+            <input type="text" class="form-control" id="addServicePhone" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Service Type</label>
+            <select class="form-select" id="addServiceType" required>
+              <option value="">-- choose --</option>
+              <option value="CUSTOM_BUILD">Custom Build</option>
+              <option value="CLEANING">Cleaning</option>
+              <option value="REPAIR">Repair</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" id="addServiceDescription"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="addServiceStatus" required>
+              <option value="PENDING">Pending</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="CONFIRMED">Confirmed</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="CANCELLED">Cancelled</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Estimated Price</label>
+            <input type="number" step="0.01" class="form-control" id="addServicePrice">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Service</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Service Modal -->
+<div class="modal fade" id="editServiceModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="editServiceForm">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Service</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editServiceId">
+          <div class="mb-3">
+            <label class="form-label">Customer Email</label>
+            <input type="email" class="form-control" id="editServiceEmail" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Customer Phone</label>
+            <input type="text" class="form-control" id="editServicePhone" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Service Type</label>
+            <select class="form-select" id="editServiceType" required>
+              <option value="">-- choose --</option>
+              <option value="CUSTOM_BUILD">Custom Build</option>
+              <option value="CLEANING">Cleaning</option>
+              <option value="REPAIR">Repair</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" id="editServiceDescription"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="editServiceStatus" required>
+              <option value="PENDING">Pending</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="CONFIRMED">Confirmed</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="CANCELLED">Cancelled</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Estimated Price</label>
+            <input type="number" step="0.01" class="form-control" id="editServicePrice">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
 
 
 <script src="/webjars/jquery/jquery.min.js"></script>
 <script src="/webjars/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script>
-$(function(){
+
+window.filterOrders = function() {
+	  const name = $('#filterName').val().toLowerCase();
+	  const category = $('#filterCategory').val();
+	  const brand = $('#filterBrand').val().toLowerCase();
+	  const minPrice = parseFloat($('#filterMinPrice').val()) || 0;
+	  const maxPrice = parseFloat($('#filterMaxPrice').val()) || Infinity;
+	  const stockStatus = $('#filterStockStatus').val(); // 'out', 'discontinued', ''
+
+	  $('#products table tbody tr').each(function () {
+	    const row = $(this);
+	    const prodName = row.find('td:nth-child(2)').text().toLowerCase();
+	    const prodBrand = row.find('td:nth-child(3)').text().toLowerCase();
+	    const prodPrice = parseFloat(row.find('td:nth-child(4)').text().replace('$', '')) || 0;
+	    const prodStock = parseInt(row.find('td:nth-child(5)').text()) || 0;
+
+	    let isVisible = true;
+
+	    if (name && !prodName.includes(name)) isVisible = false;
+	    if (brand && !prodBrand.includes(brand)) isVisible = false;
+	    if (category && !row.find('td:nth-child(7)').text().includes(category)) isVisible = false; // if category displayed
+	    if (prodPrice < minPrice || prodPrice > maxPrice) isVisible = false;
+
+	    // Handle stock status
+	    if (stockStatus === 'out' && prodStock > 0) isVisible = false;
+	    if (stockStatus === 'discontinued' && !row.hasClass('discontinued')) isVisible = false;
+
+	    row.toggle(isVisible);
+	  });
+	}
+
+//1) Hàm lọc phải nằm ngoài $(function) để global
+window.filterOrders = function() {
+  const nameFilter = $('#searchName').val().toLowerCase();
+  const minTotal   = parseFloat($('#minTotal').val()) || 0;
+  const maxTotal   = parseFloat($('#maxTotal').val()) || Infinity;
+
+  $('#ordersTable tbody tr').each(function() {
+    const $row      = $(this);
+    const prods     = ($row.data('products') || '').toLowerCase();
+    const totalTxt  = $row.find('.order-total').text().replace('$','').trim();
+    const totalVal  = parseFloat(totalTxt) || 0;
+
+    const okName   = prods.includes(nameFilter);
+    const okTotal  = (totalVal >= minTotal && totalVal <= maxTotal);
+    $row.toggle(okName && okTotal);
+  });
+};
+
+// 2) Khi DOM sẵn sàng thì bind mọi sự kiện
+$(function() {
+  // Filter button
+  $('#btnFilter').click(filterOrders);
+
   // Edit
   window.editProduct = function(id){
     $.getJSON('/api/products/'+id, function(p){
@@ -455,6 +747,7 @@ $(function(){
       $('#editLayout').val(p.layout||'');
       $('#editImageUrl').val(p.imageUrl);
       $('#editFeatured').prop('checked', p.featured);
+      $('#editDiscontinued').prop('checked', p.discontinued);
       new bootstrap.Modal($('#editProductModal')[0]).show();
     });
   };
@@ -474,7 +767,8 @@ $(function(){
       description:$('#description').val(), price:parseFloat($('#price').val()),
       stock:parseInt($('#stock').val()), category:$('#category').val(),
       switchType:$('#switchType').val()||null, layout:$('#layout').val()||null,
-      imageUrl:$('#imageUrl').val(), featured:$('#featured').is(':checked')
+      imageUrl:$('#imageUrl').val(), featured:$('#featured').is(':checked'),
+      discontinued: $('#addDiscontinued').is(':checked')    
     };
     $.ajax({
       url:'/api/products', type:'POST', contentType:'application/json',
@@ -492,7 +786,8 @@ $(function(){
       description:$('#editDescription').val(), price:parseFloat($('#editPrice').val()),
       stock:parseInt($('#editStock').val()), category:$('#editCategory').val(),
       switchType:$('#editSwitchType').val()||null, layout:$('#editLayout').val()||null,
-      imageUrl:$('#editImageUrl').val(), featured:$('#editFeatured').is(':checked')
+      imageUrl:$('#editImageUrl').val(), featured:$('#editFeatured').is(':checked'),
+      discontinued: $('#editDiscontinued').is(':checked')    
     };
     $.ajax({
       url:'/api/products/'+id, type:'PUT', contentType:'application/json',
@@ -575,16 +870,24 @@ $('#editUserForm').submit(function(e) {
 });
 
 
-// Delete user
+//Delete user
 window.deleteUser = function(id) {
   if (confirm('Xoá user #' + id + '?')) {
     $.ajax({
       url: '/api/users/' + id,
       type: 'DELETE',
-      success: () => location.reload()
+      success: () => location.reload(),
+      error: function(xhr) {
+        if (xhr.status === 409) {
+          alert('Không thể xoá user vì có đơn hàng chưa bị huỷ.');
+        } else {
+          alert('Lỗi khi xoá user.');
+        }
+      }
     });
   }
 };
+
 //Save active tab
 // Lưu tab đang active vào localStorage
 $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
@@ -627,6 +930,136 @@ $(function(){
     });
   });
 });
+function filterProducts() {
+	  const name = $('#filterName').val().toLowerCase();
+	  const category = $('#filterCategory').val().toLowerCase();
+	  const brand = $('#filterBrand').val().toLowerCase();
+	  const minPrice = parseFloat($('#filterMinPrice').val()) || 0;
+	  const maxPrice = parseFloat($('#filterMaxPrice').val()) || Infinity;
+	  const stockStatus = $('#filterStockStatus').val();
+
+	  $('#products table tbody tr').each(function () {
+	    const row = $(this);
+	    const prodName = row.find('td:nth-child(2)').text().toLowerCase();
+	    const prodBrand = row.find('td:nth-child(3)').text().toLowerCase();
+	    const prodPrice = parseFloat(row.find('td:nth-child(4)').text().replace('$', '')) || 0;
+	    const prodStock = parseInt(row.find('td:nth-child(5)').text()) || 0;
+	    const prodCategory = row.find('td:nth-child(6)').text().toLowerCase();
+	    const isDiscontinued = row.hasClass('discontinued');
+
+	    let visible = true;
+
+	    if (name && !prodName.includes(name)) visible = false;
+	    if (brand && !prodBrand.includes(brand)) visible = false;
+	    if (category && !prodCategory.includes(category)) visible = false;
+	    if (prodPrice < minPrice || prodPrice > maxPrice) visible = false;
+
+	    if (stockStatus === 'out' && prodStock > 0) visible = false;
+	    if (stockStatus === 'discontinued' && !isDiscontinued) visible = false;
+
+	    row.toggle(visible);
+	  });
+	}
+	  // Add new service
+	  $('#addServiceForm').submit(function (e) {
+	    e.preventDefault();
+	    const data = {
+	      user: { id: parseInt($('#addServiceUserId').val(),10) },
+	      serviceType:    $('#addServiceType').val(),
+	      description:    $('#addServiceDescription').val(),
+	      status:         $('#addServiceStatus').val(),
+	      estimatedPrice: parseFloat($('#addServicePrice').val())||0
+	    };
+	    $.ajax({
+	      url: '/api/services',
+	      type: 'POST',
+	      contentType: 'application/json',
+	      data: JSON.stringify(data),
+	      success: () => {
+	        $('#addServiceModal').modal('hide');
+	        location.reload();
+	      },
+	      error: xhr => alert('Failed to add service: '+xhr.responseText)
+	    });
+	  });
+
+
+
+	  $(function(){
+
+		  // 1) Thêm service
+		  $('#addServiceForm').submit(function(e){
+		    e.preventDefault();
+		    const data = {
+		      customerEmail: $('#addServiceEmail').val(),
+		      customerPhone: $('#addServicePhone').val(),
+		      serviceType:   $('#addServiceType').val(),
+		      description:   $('#addServiceDescription').val(),
+		      status:        $('#addServiceStatus').val(),
+		      estimatedPrice: parseFloat($('#addServicePrice').val())||0
+		    };
+		    $.ajax({
+		      url: '/api/services',
+		      type: 'POST',
+		      contentType: 'application/json',
+		      data: JSON.stringify(data),
+		      success: ()=>{
+		        $('#addServiceModal').modal('hide');
+		        location.reload();
+		      },
+		      error: xhr=> alert('Failed to add service: '+xhr.responseText)
+		    });
+		  });
+
+		  // 2) Mở modal sửa và bind dữ liệu
+		  window.editService = function(id){
+		    $.getJSON('/api/services/'+id, s=>{
+		      $('#editServiceId').val(s.id);
+		      $('#editServiceEmail').val(s.customerEmail);
+		      $('#editServicePhone').val(s.customerPhone);
+		      $('#editServiceType').val(s.serviceType);
+		      $('#editServiceDescription').val(s.description);
+		      $('#editServiceStatus').val(s.status);
+		      $('#editServicePrice').val(s.estimatedPrice);
+		      new bootstrap.Modal($('#editServiceModal')[0]).show();
+		    }).fail(()=> alert('Service #'+id+' not found.'));
+		  };
+
+		  // 3) Lưu chỉnh sửa
+		  $('#editServiceForm').submit(function(e){
+		    e.preventDefault();
+		    const id = $('#editServiceId').val();
+		    const data = {
+		      customerEmail: $('#editServiceEmail').val(),
+		      customerPhone: $('#editServicePhone').val(),
+		      serviceType:   $('#editServiceType').val(),
+		      description:   $('#editServiceDescription').val(),
+		      status:        $('#editServiceStatus').val(),
+		      estimatedPrice: parseFloat($('#editServicePrice').val())||0
+		    };
+		    $.ajax({
+		      url: '/api/services/'+id,
+		      type: 'PUT',
+		      contentType: 'application/json',
+		      data: JSON.stringify(data),
+		      success: ()=> location.reload(),
+		      error: xhr=> alert('Failed to update service: '+xhr.responseText)
+		    });
+		  });
+
+		  // 4) Xóa
+		  window.deleteService = function(id){
+		    if(!confirm('Delete service #'+id+'?')) return;
+		    $.ajax({
+		      url: '/api/services/'+id,
+		      type: 'DELETE',
+		      success: ()=> location.reload(),
+		      error: xhr=> alert('Failed to delete service #'+id+': '+xhr.responseText)
+		    });
+		  };
+
+		});
+
 
 
 </script>

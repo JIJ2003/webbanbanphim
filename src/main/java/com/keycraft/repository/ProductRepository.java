@@ -22,6 +22,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     
     List<Product> findByNameContainingIgnoreCase(String name);
     
+    List<Product> findByDiscontinuedFalse(); // hiện sản phẩm bình thường
+    List<Product> findByDiscontinuedTrue();  // hiện sản phẩm đã gỡ
+
+    
     @Query("SELECT p FROM Product p WHERE " +
            "(:category IS NULL OR p.category = :category) AND " +
            "(:brand IS NULL OR p.brand = :brand) AND " +

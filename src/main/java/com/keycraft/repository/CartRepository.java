@@ -33,4 +33,6 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
      * @param user người dùng
      */
     void deleteByUser(User user);
+    void deleteAllByUserId(Long userId);
+
 }
